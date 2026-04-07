@@ -152,7 +152,7 @@ studenti:
 4. Copialo nel campo corrispondente
 
 ### Come trovare il codice scuola
-Il codice scuola si trova nell'app DiDUP nella schermata del profilo (es. `SC26639`).
+Il codice scuola si trova nell'app DiDUP nella schermata del profilo (es. `SC12345`).
 
 ---
 
@@ -161,16 +161,8 @@ Il codice scuola si trova nell'app DiDUP nella schermata del profilo (es. `SC266
 1. Apri Telegram e cerca **@BotFather**
 2. Invia `/newbot` e segui le istruzioni
 3. Copia il **token** e incollalo nella configurazione
-4. Imposta i comandi con `/setcommands`:
 
-```
-start - Benvenuto e ottieni il tuo Chat ID
-chatid - Mostra il tuo Chat ID
-resoconto - Riepilogo compiti e voti di oggi
-orario - Orario di oggi (o /orario lunedi)
-voti - Ultimi voti e medie per materia
-help - Mostra tutti i comandi
-```
+> ✅ I comandi del bot vengono configurati automaticamente all'avvio dell'add-on — non è necessario nessun intervento su @BotFather!
 
 ---
 

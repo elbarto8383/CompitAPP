@@ -267,6 +267,31 @@ def send_message(chat_id, testo):
     except Exception as e:
         print(f"[BOT] Errore send: {e}")
 
+def set_comandi_bot():
+    """Imposta i comandi del bot automaticamente all'avvio"""
+    if not TELEGRAM_TOKEN:
+        return
+    comandi = [
+        {"command": "start",     "description": "Benvenuto e ottieni il tuo Chat ID"},
+        {"command": "chatid",    "description": "Mostra il tuo Chat ID"},
+        {"command": "resoconto", "description": "Riepilogo compiti e voti di oggi"},
+        {"command": "orario",    "description": "Orario di oggi (o /orario lunedi)"},
+        {"command": "voti",      "description": "Ultimi voti e medie per materia"},
+        {"command": "help",      "description": "Mostra tutti i comandi"},
+    ]
+    try:
+        resp = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setMyCommands",
+            json={"commands": comandi},
+            timeout=10
+        )
+        if resp.status_code == 200:
+            print("[BOT] ✅ Comandi impostati automaticamente")
+        else:
+            print(f"[BOT] ⚠️ Errore impostazione comandi: {resp.text}")
+    except Exception as e:
+        print(f"[BOT] Errore setMyCommands: {e}")
+
 def polling_loop():
     if not TELEGRAM_TOKEN:
         print("[BOT] Token mancante — polling non avviato")
@@ -292,5 +317,6 @@ def avvia_bot():
     if not TELEGRAM_TOKEN:
         print("[BOT] Token non configurato")
         return
+    set_comandi_bot()
     threading.Thread(target=polling_loop, daemon=True).start()
     print("[BOT] Thread avviato ✅")
