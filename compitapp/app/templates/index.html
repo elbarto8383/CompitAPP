@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+
+    <!-- Stats -->
+    <div class="stat-grid" style="margin-top:16px">
+        <div class="stat-card">
+            <div class="stat-number">{{ compiti_oggi|length }}</div>
+            <div class="stat-label">📚 Compiti oggi</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ compiti_domani|length }}</div>
+            <div class="stat-label">📅 Compiti domani</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="color:{% if media and media < soglia_voto %}var(--danger){% elif media and media >= 8 %}var(--success){% else %}var(--warning){% endif %}">
+                {{ media if media else 'N/D' }}
+            </div>
+            <div class="stat-label">⭐ Media voti</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="font-size:1.3rem">
+                {% if ultimi_voti %}{{ ultimi_voti[0]['voto'] }}{% else %}—{% endif %}
+            </div>
+            <div class="stat-label">📊 Ultimo voto</div>
+        </div>
+    </div>
+
+    <!-- Compiti oggi -->
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size:1.3rem">📖</span>
+            <span class="card-title">Compiti per oggi</span>
+            {% if compiti_oggi %}<span class="badge badge-primary">{{ compiti_oggi|length }}</span>{% endif %}
+        </div>
+        {% if compiti_oggi %}
+            {% for c in compiti_oggi %}
+            <div class="compito-item">
+                <span class="materia-tag">{{ c['materia'] }}</span>
+                <div class="compito-testo">{{ c['testo'] }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">✅ Nessun compito per oggi!</div>
+        {% endif %}
+    </div>
+
+    <!-- Compiti domani -->
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size:1.3rem">🌙</span>
+            <span class="card-title">Compiti per domani</span>
+            {% if compiti_domani %}<span class="badge badge-warning">{{ compiti_domani|length }}</span>{% endif %}
+        </div>
+        {% if compiti_domani %}
+            {% for c in compiti_domani %}
+            <div class="compito-item">
+                <span class="materia-tag">{{ c['materia'] }}</span>
+                <div class="compito-testo">{{ c['testo'] }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">🎉 Nessun compito per domani!</div>
+        {% endif %}
+    </div>
+
+    <!-- Prossimi compiti — raggruppati per data senza annidamento -->
+    {% if prossimi %}
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size:1.3rem">📅</span>
+            <span class="card-title">Prossimi compiti</span>
+            <span class="badge badge-primary">{{ prossimi|length }}</span>
+        </div>
+        {% set ns = namespace(data_prec='') %}
+        {% for c in prossimi %}
+            {% if c['data'] != ns.data_prec %}
+                {% if ns.data_prec != '' %}
+                <div style="height:8px"></div>
+                {% endif %}
+                <div style="font-size:0.78rem;color:var(--text-muted);font-weight:700;margin:8px 0 4px;text-transform:uppercase;letter-spacing:0.5px">
+                    📆 {{ c['data'] }}
+                </div>
+                {% set ns.data_prec = c['data'] %}
+            {% endif %}
+            <div class="compito-item">
+                <span class="materia-tag">{{ c['materia'] }}</span>
+                <div class="compito-testo">{{ c['testo'] }}</div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Ultimi voti -->
+    {% if ultimi_voti %}
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size:1.3rem">⭐</span>
+            <span class="card-title">Ultimi voti</span>
+        </div>
+        {% for v in ultimi_voti %}
+        <div class="compito-item" style="display:flex;align-items:center;gap:12px">
+            {% set voto_num = v['voto']|float(-1) %}
+            <div class="voto-chip {% if voto_num >= soglia_voto %}voto-ok{% elif voto_num >= soglia_voto - 1 %}voto-warn{% else %}voto-bad{% endif %}">
+                {{ v['voto'] }}
+            </div>
+            <div>
+                <div style="font-size:0.85rem;font-weight:600">{{ v['materia'] }}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">{{ v['data'] }}{% if v['descrizione'] %} — {{ v['descrizione'][:50] }}{% endif %}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

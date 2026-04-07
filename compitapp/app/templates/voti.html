@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="margin-top:16px">
+
+    {% if medie %}
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size:1.3rem">📊</span>
+            <span class="card-title">Media per materia</span>
+        </div>
+        {% for materia, media in medie.items()|sort(attribute='1', reverse=True) %}
+        <div class="compito-item" style="display:flex;align-items:center;gap:12px">
+            <div class="voto-chip {% if media >= soglia %}voto-ok{% elif media >= soglia - 1 %}voto-warn{% else %}voto-bad{% endif %}">
+                {{ media }}
+            </div>
+            <div style="flex:1">
+                <div style="font-size:0.85rem;font-weight:600">{{ materia }}</div>
+                <div style="background:var(--border);border-radius:4px;height:4px;margin-top:4px">
+                    <div style="background:{% if media >= soglia %}var(--success){% elif media >= soglia-1 %}var(--warning){% else %}var(--danger){% endif %};height:4px;border-radius:4px;width:{{ [(media/10*100)|int, 100]|min }}%"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size:1.3rem">📋</span>
+            <span class="card-title">Tutti i voti</span>
+            <span class="badge badge-primary">{{ voti|length }}</span>
+        </div>
+        {% if voti %}
+            {% for v in voti %}
+            <div class="compito-item" style="display:flex;align-items:center;gap:12px">
+                {% set voto_num = v['voto']|float(-1) %}
+                <div class="voto-chip {% if voto_num >= soglia %}voto-ok{% elif voto_num >= soglia - 1 %}voto-warn{% else %}voto-bad{% endif %}">
+                    {{ v['voto'] }}
+                </div>
+                <div>
+                    <div style="font-size:0.85rem;font-weight:600">{{ v['materia'] }}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">
+                        {{ v['data'] }}{% if v['descrizione'] %} — {{ v['descrizione'][:60] }}{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">Nessun voto ancora registrato</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

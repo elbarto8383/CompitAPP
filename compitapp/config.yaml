@@ -1,0 +1,56 @@
+name: "CompitAPP"
+description: "Compiti e voti scolastici via DiDUP/Argo ScuolaNext — notifiche Telegram automatiche"
+version: "1.0.0"
+slug: compitapp
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armv7
+homeassistant_api: true
+hassio_api: true
+hassio_role: default
+auth_api: true
+
+options:
+  telegram_token: ""
+  genitore1_nome: "Genitore 1"
+  genitore1_chat_id: ""
+  genitore2_nome: "Genitore 2"
+  genitore2_chat_id: ""
+  studente_nome: "Studente"
+  studente_chat_id: ""
+  soglia_voto_alert: 7
+  orario_reminder_sera: "20:00"
+  polling_intervallo_minuti: 30
+  anno_scolastico: "2025/2026"
+  studenti:
+    - nome: ""
+      codice_scuola: ""
+      username: ""
+      password: ""
+
+schema:
+  telegram_token: password
+  genitore1_nome: str
+  genitore1_chat_id: str
+  genitore2_nome: str
+  genitore2_chat_id: str
+  studente_nome: str
+  studente_chat_id: str
+  soglia_voto_alert: int
+  orario_reminder_sera: str
+  polling_intervallo_minuti: int
+  anno_scolastico: str
+  studenti:
+    - nome: str
+      codice_scuola: str
+      username: str
+      password: str
+
+ports:
+  5002/tcp: 5002
+ports_description:
+  5002/tcp: "CompitAPP Web UI"
+map:
+  - config:rw

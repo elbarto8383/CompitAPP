@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+.orario-wrap { padding: 16px; max-width: 800px; margin: 0 auto; font-family: 'Nunito', sans-serif; }
+.orario-header { text-align: center; margin: 16px 0 20px; }
+.orario-header h2 { font-size: 1.3rem; font-weight: 900; color: #1e293b; }
+.orario-header p { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+
+.day-nav { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; scrollbar-width: none; }
+.day-nav::-webkit-scrollbar { display: none; }
+.day-btn { flex-shrink:0; padding: 8px 16px; border-radius: 20px; border: 2px solid #e2e8f0; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem; cursor: pointer; background: white; color: #64748b; transition: all 0.2s; }
+
+.giorno-card { display: none; animation: fadeIn 0.25s ease; }
+.giorno-card.visible { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+.giorno-title { font-size: 1rem; font-weight: 900; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.oggi-badge { background: #ef4444; color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; font-weight: 700; }
+
+.slot { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; margin-bottom: 8px; border-left: 4px solid transparent; transition: transform 0.15s; }
+.slot:hover { transform: translateX(3px); }
+.slot-ora { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; flex-shrink: 0; color: white; }
+.slot-materia { font-size: 0.9rem; font-weight: 800; line-height: 1.2; }
+.slot-prof { font-size: 0.72rem; color: #64748b; font-weight: 600; margin-top: 1px; }
+
+.tabella-wrap { display: none; overflow-x: auto; border-radius: 16px; background: white; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.tab-orario { width: 100%; border-collapse: collapse; }
+.tab-orario th { padding: 12px 8px; font-size: 0.8rem; font-weight: 900; text-align: center; border-bottom: 2px solid #f1f5f9; }
+.tab-orario td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+.tab-ora { font-size: 0.72rem; font-weight: 800; color: #94a3b8; width: 36px; }
+.tab-cell { border-radius: 10px; padding: 6px 4px; font-size: 0.7rem; font-weight: 800; line-height: 1.3; margin: 2px; }
+.tab-prof-small { font-size: 0.58rem; font-weight: 600; opacity: 0.75; margin-top: 1px; }
+
+@media (min-width: 600px) {
+    .tabella-wrap { display: block; }
+    .day-nav, .giorno-card { display: none !important; }
+}
+</style>
+
+<div class="orario-wrap">
+    <div class="orario-header">
+        <h2>🗓️ Orario di Luigi</h2>
+        <p>Anno scolastico 2025/2026 — Classe 3B</p>
+    </div>
+
+    <!-- Navigazione giorni mobile -->
+    <div class="day-nav">
+        <button class="day-btn" onclick="showDay(0)" id="btn-0" style="{% if giorno_oggi==1 %}background:#d97706;color:white;border-color:transparent{% endif %}">☀️ Lun</button>
+        <button class="day-btn" onclick="showDay(1)" id="btn-1" style="{% if giorno_oggi==2 %}background:#be185d;color:white;border-color:transparent{% endif %}">🌤️ Mar</button>
+        <button class="day-btn" onclick="showDay(2)" id="btn-2" style="{% if giorno_oggi==3 %}background:#0f766e;color:white;border-color:transparent{% endif %}">🌈 Mer</button>
+        <button class="day-btn" onclick="showDay(3)" id="btn-3" style="{% if giorno_oggi==4 %}background:#5b21b6;color:white;border-color:transparent{% endif %}">⚡ Gio</button>
+        <button class="day-btn" onclick="showDay(4)" id="btn-4" style="{% if giorno_oggi==5 %}background:#db2777;color:white;border-color:transparent{% endif %}">🎉 Ven</button>
+    </div>
+
+    <!-- LUNEDI -->
+    <div class="giorno-card {% if giorno_oggi==1 %}visible{% endif %}" id="giorno-0">
+        <div class="giorno-title" style="color:#d97706">☀️ Lunedì {% if giorno_oggi==1 %}<span class="oggi-badge">OGGI</span>{% endif %}</div>
+        <div class="slot" style="background:#fef3c7;border-left-color:#f59e0b"><div class="slot-ora" style="background:#f59e0b">1</div><div><div class="slot-materia" style="color:#d97706">Italiano</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#fef3c7;border-left-color:#f59e0b"><div class="slot-ora" style="background:#f59e0b">2</div><div><div class="slot-materia" style="color:#d97706">Italiano</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#ccfbf1;border-left-color:#14b8a6"><div class="slot-ora" style="background:#14b8a6">3</div><div><div class="slot-materia" style="color:#0f766e">Tecnologia</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#dbeafe;border-left-color:#3b82f6"><div class="slot-ora" style="background:#3b82f6">4</div><div><div class="slot-materia" style="color:#1d4ed8">Inglese</div><div class="slot-prof">👤 A. La Canna</div></div></div>
+        <div class="slot" style="background:#f3e8ff;border-left-color:#a855f7"><div class="slot-ora" style="background:#a855f7">5</div><div><div class="slot-materia" style="color:#7e22ce">Religione</div><div class="slot-prof">👤 M. Martone</div></div></div>
+    </div>
+
+    <!-- MARTEDI -->
+    <div class="giorno-card {% if giorno_oggi==2 %}visible{% endif %}" id="giorno-1">
+        <div class="giorno-title" style="color:#be185d">🌤️ Martedì {% if giorno_oggi==2 %}<span class="oggi-badge">OGGI</span>{% endif %}</div>
+        <div class="slot" style="background:#fef3c7;border-left-color:#f59e0b"><div class="slot-ora" style="background:#f59e0b">1</div><div><div class="slot-materia" style="color:#d97706">Italiano</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#fce7f3;border-left-color:#ec4899"><div class="slot-ora" style="background:#ec4899">2</div><div><div class="slot-materia" style="color:#be185d">Storia</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#fce7f3;border-left-color:#ec4899"><div class="slot-ora" style="background:#ec4899">3</div><div><div class="slot-materia" style="color:#be185d">Storia</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#dcfce7;border-left-color:#22c55e"><div class="slot-ora" style="background:#22c55e">4</div><div><div class="slot-materia" style="color:#15803d">Scienze Motorie</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+        <div class="slot" style="background:#ede9fe;border-left-color:#6366f1"><div class="slot-ora" style="background:#6366f1">5</div><div><div class="slot-materia" style="color:#5b21b6">Matematica</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+        <div class="slot" style="background:#ede9fe;border-left-color:#6366f1"><div class="slot-ora" style="background:#6366f1">6</div><div><div class="slot-materia" style="color:#5b21b6">Matematica</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+    </div>
+
+    <!-- MERCOLEDI -->
+    <div class="giorno-card {% if giorno_oggi==3 %}visible{% endif %}" id="giorno-2">
+        <div class="giorno-title" style="color:#0f766e">🌈 Mercoledì {% if giorno_oggi==3 %}<span class="oggi-badge">OGGI</span>{% endif %}</div>
+        <div class="slot" style="background:#fef3c7;border-left-color:#f59e0b"><div class="slot-ora" style="background:#f59e0b">1</div><div><div class="slot-materia" style="color:#d97706">Italiano</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#ffe4e6;border-left-color:#f43f5e"><div class="slot-ora" style="background:#f43f5e">2</div><div><div class="slot-materia" style="color:#be123c">Arte e Immagine</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#ede9fe;border-left-color:#6366f1"><div class="slot-ora" style="background:#6366f1">3</div><div><div class="slot-materia" style="color:#5b21b6">Matematica</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+        <div class="slot" style="background:#d1fae5;border-left-color:#10b981"><div class="slot-ora" style="background:#10b981">4</div><div><div class="slot-materia" style="color:#065f46">Scienze</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+        <div class="slot" style="background:#f3e8ff;border-left-color:#a855f7"><div class="slot-ora" style="background:#a855f7">5</div><div><div class="slot-materia" style="color:#7e22ce">Religione</div><div class="slot-prof">👤 M. Martone</div></div></div>
+    </div>
+
+    <!-- GIOVEDI -->
+    <div class="giorno-card {% if giorno_oggi==4 %}visible{% endif %}" id="giorno-3">
+        <div class="giorno-title" style="color:#5b21b6">⚡ Giovedì {% if giorno_oggi==4 %}<span class="oggi-badge">OGGI</span>{% endif %}</div>
+        <div class="slot" style="background:#dbeafe;border-left-color:#3b82f6"><div class="slot-ora" style="background:#3b82f6">1</div><div><div class="slot-materia" style="color:#1d4ed8">Inglese</div><div class="slot-prof">👤 A. La Canna</div></div></div>
+        <div class="slot" style="background:#ede9fe;border-left-color:#6366f1"><div class="slot-ora" style="background:#6366f1">2</div><div><div class="slot-materia" style="color:#5b21b6">Matematica</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+        <div class="slot" style="background:#ede9fe;border-left-color:#6366f1"><div class="slot-ora" style="background:#6366f1">3</div><div><div class="slot-materia" style="color:#5b21b6">Matematica</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+        <div class="slot" style="background:#fef3c7;border-left-color:#f59e0b"><div class="slot-ora" style="background:#f59e0b">4</div><div><div class="slot-materia" style="color:#d97706">Italiano</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#fef9c3;border-left-color:#eab308"><div class="slot-ora" style="background:#eab308">5</div><div><div class="slot-materia" style="color:#a16207">Geografia</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#fef9c3;border-left-color:#eab308"><div class="slot-ora" style="background:#eab308">6</div><div><div class="slot-materia" style="color:#a16207">Geografia</div><div class="slot-prof">👤 M. Rao</div></div></div>
+    </div>
+
+    <!-- VENERDI -->
+    <div class="giorno-card {% if giorno_oggi==5 %}visible{% endif %}" id="giorno-4">
+        <div class="giorno-title" style="color:#db2777">🎉 Venerdì {% if giorno_oggi==5 %}<span class="oggi-badge">OGGI</span>{% endif %}</div>
+        <div class="slot" style="background:#dbeafe;border-left-color:#3b82f6"><div class="slot-ora" style="background:#3b82f6">1</div><div><div class="slot-materia" style="color:#1d4ed8">Inglese</div><div class="slot-prof">👤 A. La Canna</div></div></div>
+        <div class="slot" style="background:#ede9fe;border-left-color:#6366f1"><div class="slot-ora" style="background:#6366f1">2</div><div><div class="slot-materia" style="color:#5b21b6">Matematica</div><div class="slot-prof">👤 P. Di Gaetano</div></div></div>
+        <div class="slot" style="background:#fef3c7;border-left-color:#f59e0b"><div class="slot-ora" style="background:#f59e0b">3</div><div><div class="slot-materia" style="color:#d97706">Italiano</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#fce7f3;border-left-color:#ec4899"><div class="slot-ora" style="background:#ec4899">4</div><div><div class="slot-materia" style="color:#be185d">Storia</div><div class="slot-prof">👤 M. Rao</div></div></div>
+        <div class="slot" style="background:#e0f2fe;border-left-color:#0ea5e9"><div class="slot-ora" style="background:#0ea5e9">5</div><div><div class="slot-materia" style="color:#0369a1">Musica</div><div class="slot-prof">👤 M. Rao</div></div></div>
+    </div>
+
+    <!-- Tabella desktop -->
+    <div class="tabella-wrap">
+        <table class="tab-orario">
+            <thead>
+                <tr>
+                    <th class="tab-ora"></th>
+                    <th style="color:#d97706;{% if giorno_oggi==1 %}background:#fffbeb{% endif %}">☀️<br>LUN</th>
+                    <th style="color:#be185d;{% if giorno_oggi==2 %}background:#fdf2f8{% endif %}">🌤️<br>MAR</th>
+                    <th style="color:#0f766e;{% if giorno_oggi==3 %}background:#f0fdfa{% endif %}">🌈<br>MER</th>
+                    <th style="color:#5b21b6;{% if giorno_oggi==4 %}background:#faf5ff{% endif %}">⚡<br>GIO</th>
+                    <th style="color:#db2777;{% if giorno_oggi==5 %}background:#fdf2f8{% endif %}">🎉<br>VEN</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="tab-ora">1ª</td>
+                    <td><div class="tab-cell" style="background:#fef3c7;color:#d97706">Italiano<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#fef3c7;color:#d97706">Italiano<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#fef3c7;color:#d97706">Italiano<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#dbeafe;color:#1d4ed8">Inglese<div class="tab-prof-small">A. La Canna</div></div></td>
+                    <td><div class="tab-cell" style="background:#dbeafe;color:#1d4ed8">Inglese<div class="tab-prof-small">A. La Canna</div></div></td>
+                </tr>
+                <tr>
+                    <td class="tab-ora">2ª</td>
+                    <td><div class="tab-cell" style="background:#fef3c7;color:#d97706">Italiano<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#fce7f3;color:#be185d">Storia<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#ffe4e6;color:#be123c">Arte<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#ede9fe;color:#5b21b6">Matematica<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                    <td><div class="tab-cell" style="background:#ede9fe;color:#5b21b6">Matematica<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                </tr>
+                <tr>
+                    <td class="tab-ora">3ª</td>
+                    <td><div class="tab-cell" style="background:#ccfbf1;color:#0f766e">Tecnologia<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#fce7f3;color:#be185d">Storia<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#ede9fe;color:#5b21b6">Matematica<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                    <td><div class="tab-cell" style="background:#ede9fe;color:#5b21b6">Matematica<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                    <td><div class="tab-cell" style="background:#fef3c7;color:#d97706">Italiano<div class="tab-prof-small">M. Rao</div></div></td>
+                </tr>
+                <tr>
+                    <td class="tab-ora">4ª</td>
+                    <td><div class="tab-cell" style="background:#dbeafe;color:#1d4ed8">Inglese<div class="tab-prof-small">A. La Canna</div></div></td>
+                    <td><div class="tab-cell" style="background:#dcfce7;color:#15803d">Sc. Mot.<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                    <td><div class="tab-cell" style="background:#d1fae5;color:#065f46">Scienze<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                    <td><div class="tab-cell" style="background:#fef3c7;color:#d97706">Italiano<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#fce7f3;color:#be185d">Storia<div class="tab-prof-small">M. Rao</div></div></td>
+                </tr>
+                <tr>
+                    <td class="tab-ora">5ª</td>
+                    <td><div class="tab-cell" style="background:#f3e8ff;color:#7e22ce">Religione<div class="tab-prof-small">M. Martone</div></div></td>
+                    <td><div class="tab-cell" style="background:#ede9fe;color:#5b21b6">Matematica<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                    <td><div class="tab-cell" style="background:#f3e8ff;color:#7e22ce">Religione<div class="tab-prof-small">M. Martone</div></div></td>
+                    <td><div class="tab-cell" style="background:#fef9c3;color:#a16207">Geografia<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td><div class="tab-cell" style="background:#e0f2fe;color:#0369a1">Musica<div class="tab-prof-small">M. Rao</div></div></td>
+                </tr>
+                <tr>
+                    <td class="tab-ora">6ª</td>
+                    <td></td>
+                    <td><div class="tab-cell" style="background:#ede9fe;color:#5b21b6">Matematica<div class="tab-prof-small">P. Di Gaetano</div></div></td>
+                    <td></td>
+                    <td><div class="tab-cell" style="background:#fef9c3;color:#a16207">Geografia<div class="tab-prof-small">M. Rao</div></div></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const oggiIdx = {{ giorno_oggi }} - 1;
+function showDay(idx) {
+    document.querySelectorAll('.giorno-card').forEach(c => c.classList.remove('visible'));
+    document.getElementById('giorno-' + idx).classList.add('visible');
+}
+// Mostra giorno corrente all'avvio se è un giorno scolastico
+if (oggiIdx >= 0 && oggiIdx <= 4) showDay(oggiIdx);
+else showDay(0);
+</script>
+
+{% endblock %}
