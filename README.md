@@ -14,9 +14,17 @@
 
 ---
 
-### ❤️ Se CompitAPP ti è utile, considera una donazione per supportare lo sviluppo
+## 💝 Supporta il progetto
+
+CompitAPP è un progetto open source sviluppato nel tempo libero con passione.
+Se ti è utile e vuoi supportarne lo sviluppo, considera una donazione!
 
 [![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/elbarto83)
+
+**[@elbarto83](https://paypal.me/elbarto83)**
+
+*Ogni contributo, anche piccolo, aiuta a mantenere il progetto attivo,*
+*coprire i costi di sviluppo e aggiungere nuove funzionalità!*
 
 ---
 
