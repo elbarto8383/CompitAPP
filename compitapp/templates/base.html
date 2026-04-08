@@ -69,21 +69,41 @@
 </div>
 {% endif %}
 
-<div class="nav-tabs">
-    <a href="/?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/' }}">🏠 Oggi</a>
-    <a href="/calendario?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/calendario' }}">📅 Calendario</a>
-    <a href="/voti?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/voti' }}">📊 Voti</a>
-    <a href="/orario?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/orario' }}">🗓️ Orario</a>
-    <a href="/bacheca?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/bacheca' }}">📢 Bacheca</a>
-    <a href="/assenze?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/assenze' }}">🏠 Assenze</a>
-    <a href="/argomenti?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/argomenti' }}">📖 Lezioni</a>
-    <a href="/configurazione?studente={{ studente_sel }}" class="{{ 'active' if request.path == '/configurazione' }}">⚙️ Config</a>
+<div class="nav-tabs" id="nav-tabs">
+    <a href="#" onclick="navTo('/')" class="{{ 'active' if request.path == '/' }}">🏠 Oggi</a>
+    <a href="#" onclick="navTo('/calendario')" class="{{ 'active' if request.path == '/calendario' }}">📅 Calendario</a>
+    <a href="#" onclick="navTo('/voti')" class="{{ 'active' if request.path == '/voti' }}">📊 Voti</a>
+    <a href="#" onclick="navTo('/orario')" class="{{ 'active' if request.path == '/orario' }}">🗓️ Orario</a>
+    <a href="#" onclick="navTo('/bacheca')" class="{{ 'active' if request.path == '/bacheca' }}">📢 Bacheca</a>
+    <a href="#" onclick="navTo('/assenze')" class="{{ 'active' if request.path == '/assenze' }}">🏠 Assenze</a>
+    <a href="#" onclick="navTo('/argomenti')" class="{{ 'active' if request.path == '/argomenti' }}">📖 Lezioni</a>
+    <a href="#" onclick="navTo('/configurazione')" class="{{ 'active' if request.path == '/configurazione' }}">⚙️ Config</a>
 </div>
 
 {% block content %}{% endblock %}
 
 <div class="toast" id="toast"></div>
 <script>
+function getBasePath() {
+    // Rileva automaticamente il base path (funziona sia con Ingress che senza)
+    const path = window.location.pathname;
+    const pages = ['/', '/calendario', '/voti', '/orario', '/bacheca', '/assenze', '/argomenti', '/configurazione', '/healthz'];
+    for (const page of pages) {
+        if (path.endsWith(page) && page !== '/') {
+            return path.slice(0, path.length - page.length);
+        }
+    }
+    return path.endsWith('/') ? path.slice(0, -1) : path.replace(/\/[^\/]*$/, '');
+}
+
+function navTo(page) {
+    const studente = new URLSearchParams(window.location.search).get('studente') || '';
+    const base = getBasePath();
+    const url = base + page + (studente ? '?studente=' + encodeURIComponent(studente) : '');
+    window.location.href = url;
+    return false;
+}
+
 function showToast(msg, ms=2500) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.style.display = 'block';
@@ -92,7 +112,7 @@ function showToast(msg, ms=2500) {
 async function syncNow() {
     showToast('⏳ Sincronizzazione...');
     try {
-        const r = await fetch('/api/sync', {method:'POST'});
+        const r = await fetch(getBasePath() + '/api/sync', {method:'POST'});
         if (r.ok) { showToast('✅ Sync completato!'); setTimeout(() => location.reload(), 1500); }
         else showToast('❌ Errore sync');
     } catch(e) { showToast('❌ Errore connessione'); }
