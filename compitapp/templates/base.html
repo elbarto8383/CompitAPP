@@ -84,21 +84,11 @@
 
 <div class="toast" id="toast"></div>
 <script>
-function getBasePath() {
-    // Rileva automaticamente il base path (funziona sia con Ingress che senza)
-    const path = window.location.pathname;
-    const pages = ['/', '/calendario', '/voti', '/orario', '/bacheca', '/assenze', '/argomenti', '/configurazione', '/healthz'];
-    for (const page of pages) {
-        if (path.endsWith(page) && page !== '/') {
-            return path.slice(0, path.length - page.length);
-        }
-    }
-    return path.endsWith('/') ? path.slice(0, -1) : path.replace(/\/[^\/]*$/, '');
-}
-
 function navTo(page) {
+    // Usa path relativi — funziona sempre sia con Ingress che senza
     const studente = new URLSearchParams(window.location.search).get('studente') || '';
-    const base = getBasePath();
+    // Torna alla root del sito corrente e aggiungi il path
+    const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
     const url = base + page + (studente ? '?studente=' + encodeURIComponent(studente) : '');
     window.location.href = url;
     return false;
@@ -112,7 +102,7 @@ function showToast(msg, ms=2500) {
 async function syncNow() {
     showToast('⏳ Sincronizzazione...');
     try {
-        const r = await fetch(getBasePath() + '/api/sync', {method:'POST'});
+        const r = await fetch('./api/sync', {method:'POST'});
         if (r.ok) { showToast('✅ Sync completato!'); setTimeout(() => location.reload(), 1500); }
         else showToast('❌ Errore sync');
     } catch(e) { showToast('❌ Errore connessione'); }

@@ -38,10 +38,25 @@ def _media(voti):
 def healthz():
     return 'OK', 200
 
+@app.route('/debug-headers')
+def debug_headers():
+    headers = dict(request.headers)
+    env_keys = ['PATH_INFO', 'SCRIPT_NAME', 'HTTP_X_INGRESS_PATH', 
+                'HTTP_X_FORWARDED_PREFIX', 'HTTP_X_REAL_IP']
+    env_info = {k: request.environ.get(k, 'N/A') for k in env_keys}
+    return jsonify({
+        'headers': headers,
+        'environ': env_info,
+        'path': request.path,
+        'script_root': request.script_root,
+        'url': request.url
+    })
+
 
 
 @app.route('/')
 def index():
+    print(f"[FLASK] PATH: {request.path} | SCRIPT_ROOT: {request.script_root} | FULL: {request.url}")
     studenti = get_studenti()
     sel = _sel(studenti)
     oggi = date.today().strftime('%Y-%m-%d')
