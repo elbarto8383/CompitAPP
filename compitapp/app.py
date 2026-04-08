@@ -89,6 +89,11 @@ def _media(voti):
             pass
     return round(sum(valori)/len(valori), 1) if valori else None
 
+@app.route('/healthz')
+@app.route('/health')
+def healthz():
+    return 'OK', 200
+
 @app.route('/')
 def index():
     studenti = get_studenti()
