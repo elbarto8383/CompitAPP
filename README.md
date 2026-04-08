@@ -40,20 +40,22 @@ Se ti è utile e vuoi supportarne lo sviluppo, considera una donazione!
 
 ## ✨ Funzionalità complete
 
-### 📱 PWA Web (accessibile da browser e iPhone/Android)
+### 📱 PWA Web — accessibile da browser, iPhone e Android
 
 | Tab | Contenuto |
 |---|---|
 | 🏠 **Oggi** | Compiti di oggi, domani, prossimi giorni + ultimi voti |
-| 📅 **Calendario** | Tutti i compiti passati e futuri |
-| 📊 **Voti** | Tutti i voti con media per materia |
-| 🗓️ **Orario** | Orario settimanale colorato per materia |
+| 📅 **Calendario** | Tutti i compiti passati e futuri con toggle passati/futuri |
+| 📊 **Voti** | Tutti i voti con media per materia e barre di progresso |
+| 🗓️ **Orario** | Orario settimanale colorato per materia (mobile + desktop) |
 | 📢 **Bacheca** | Comunicazioni e circolari della scuola |
-| 🏠 **Assenze** | Registro assenze, ritardi e uscite anticipate |
-| 📖 **Lezioni** | Argomenti svolti in classe |
-| ⚙️ **Config** | Stato connessione, destinatari, impostazioni |
+| 🏠 **Assenze** | Registro assenze, ritardi e uscite anticipate con statistiche |
+| 📖 **Lezioni** | Argomenti svolti in classe negli ultimi 30 giorni |
+| ⚙️ **Config** | Stato connessione DiDUP, destinatari Telegram, impostazioni |
 
 ### 🤖 Bot Telegram — comandi disponibili
+
+> ✅ I comandi vengono configurati **automaticamente** all'avvio — non serve nessun intervento su @BotFather!
 
 | Comando | Descrizione |
 |---|---|
@@ -61,8 +63,8 @@ Se ti è utile e vuoi supportarne lo sviluppo, considera una donazione!
 | `/chatid` | Mostra il tuo Chat ID |
 | `/resoconto` | Riepilogo completo compiti + voti del giorno |
 | `/orario` | Orario di oggi |
-| `/orario lunedi` | Orario di un giorno specifico |
-| `/voti` | Ultimi voti e media per materia |
+| `/orario lunedi` | Orario di un giorno specifico (lun/mar/mer/gio/ven) |
+| `/voti` | Ultimi voti e media per materia con semaforo |
 | `/help` | Lista di tutti i comandi |
 
 ### 🔔 Notifiche automatiche Telegram
@@ -78,8 +80,8 @@ Se ti è utile e vuoi supportarne lo sviluppo, considera una donazione!
 | ⚠️ Nota disciplinare | ✅ | ❌ privacy |
 
 ### 👨‍👩‍👧 Multi-destinatario intelligente
-- **Genitore 1 e 2** — ricevono tutto
-- **Studente** — riceve compiti e reminder, **NON voti/assenze/note** (privacy!)
+- **Genitore 1 e 2** — ricevono tutto: compiti, voti, assenze, comunicazioni
+- **Studente** — riceve solo compiti e reminder, **mai voti, assenze o note** (privacy!)
 - **Multi-studente** — supporto per più figli nella stessa famiglia
 
 ### 🏠 Sensori Home Assistant
@@ -93,6 +95,33 @@ Per ogni studente vengono creati automaticamente:
 
 ---
 
+## 🔒 Sicurezza e Privacy
+
+### CompitAPP è sicuro al 100% — ecco perché
+
+**📖 Solo lettura**
+CompitAPP si connette al registro DiDUP esclusivamente in **modalità lettura**. Non può inserire voti, modificare dati, giustificare assenze o compiere qualsiasi azione sul registro. È tecnicamente impossibile che causi danni ai dati scolastici.
+
+**🏠 Dati solo in casa tua**
+Tutti i dati (compiti, voti, assenze) vengono scaricati e salvati **localmente sul tuo Home Assistant**. Non transitano su server esterni, non vengono condivisi con nessuno, non escono dalla tua rete domestica.
+
+**🔐 Accesso protetto da HA Ingress**
+La PWA di CompitAPP è accessibile tramite il sistema **Ingress di Home Assistant** — lo stesso meccanismo usato da tutti gli add-on ufficiali (File Editor, Terminal, ecc.). Questo significa:
+- ✅ Protetta da HTTPS automaticamente
+- ✅ Accessibile solo agli utenti autenticati in HA
+- ✅ **Non esposta su nessuna porta pubblica**
+- ✅ Funziona in remoto tramite il tunnel sicuro di HA
+
+**👨‍👩‍👧 Privacy in famiglia**
+CompitAPP distingue i destinatari Telegram per ruolo:
+- **Genitori** — ricevono tutto: compiti, voti, assenze, comunicazioni
+- **Studente** — riceve solo compiti e reminder, **mai voti, assenze o note disciplinari**
+
+**🔑 Credenziali al sicuro**
+Le credenziali DiDUP sono salvate solo nella configurazione locale di Home Assistant, mai trasmesse a terzi. Il token Telegram è oscurato nell'interfaccia di configurazione.
+
+---
+
 ## 🚀 Installazione
 
 ### Metodo 1 — Da repository GitHub (consigliato)
@@ -103,7 +132,7 @@ Per ogni studente vengono creati automaticamente:
 4. Clicca **Aggiungi**
 5. Cerca **CompitAPP** nello store e clicca **Installa**
 6. Vai su **Configurazione** e compila i campi
-7. Clicca **Avvia**
+7. Clicca **Salva** → **Avvia**
 
 ### Metodo 2 — Installazione locale via Samba
 
@@ -121,32 +150,36 @@ Dopo l'installazione vai su **Impostazioni → Add-on → CompitAPP → Configur
 
 ```yaml
 # Token del bot Telegram (ottienilo da @BotFather)
-telegram_token: "123456:ABC-DEF..."
+telegram_token: "123456:ABC-DEF..."   # Campo oscurato per sicurezza
 
-# Destinatari
-genitore1_nome: "Mario"           # Nome Genitore 1
-genitore1_chat_id: "44413116"     # Chat ID Genitore 1
-genitore2_nome: "Lucia"           # Nome Genitore 2 (opzionale)
-genitore2_chat_id: ""             # Chat ID Genitore 2 (opzionale)
-studente_nome: "Luigi"            # Nome studente
-studente_chat_id: ""              # Chat ID studente (opzionale, non riceve voti)
+# Destinatari — Genitore 1 (obbligatorio)
+genitore1_nome: "Mario"
+genitore1_chat_id: ""
 
-# Impostazioni
+# Destinatari — Genitore 2 (opzionale)
+genitore2_nome: "Lucia"
+genitore2_chat_id: ""
+
+# Destinatari — Studente (opzionale, NON riceve voti/assenze/note)
+studente_nome: "Luigi"
+studente_chat_id: ""
+
+# Impostazioni notifiche
 soglia_voto_alert: 7              # Alert se voto sotto questa soglia
 orario_reminder_sera: "20:00"     # Orario reminder serale compiti
 polling_intervallo_minuti: 30     # Frequenza controllo DiDUP (minuti)
-anno_scolastico: "2025/2026"      # Anno scolastico corrente
+anno_scolastico: "2025/2026"
 
 # Studenti (uno o più figli)
 studenti:
   - nome: "Luigi Rossi"
-    codice_scuola: "SC12345"      # Codice scuola dalla segreteria
+    codice_scuola: "SC12345"      # Codice scuola (dalla segreteria o dall'app DiDUP)
     username: "l.rossi"           # Username DiDUP
-    password: "la_tua_password"   # Password DiDUP
+    password: "la_tua_password"
 ```
 
 ### Come trovare il tuo Chat ID Telegram
-1. Cerca il tuo bot su Telegram (quello creato con @BotFather)
+1. Cerca il tuo bot su Telegram
 2. Invia `/start`
 3. Il bot risponderà con il tuo **Chat ID**
 4. Copialo nel campo corrispondente
@@ -156,28 +189,22 @@ Il codice scuola si trova nell'app DiDUP nella schermata del profilo (es. `SC123
 
 ---
 
-## 🤖 Configurazione Bot Telegram
-
-1. Apri Telegram e cerca **@BotFather**
-2. Invia `/newbot` e segui le istruzioni
-3. Copia il **token** e incollalo nella configurazione
-
-> ✅ I comandi del bot vengono configurati automaticamente all'avvio dell'add-on — non è necessario nessun intervento su @BotFather!
-
----
-
 ## 📡 Accesso alla PWA
 
-Dopo l'avvio, la PWA è accessibile a:
-- **Rete locale**: `http://IP-HOME-ASSISTANT:5002`
-- **Pannello HA**: aggiungi una scheda **Pagina Web** nella dashboard con l'URL sopra
+Dopo l'avvio, CompitAPP appare automaticamente nella **barra laterale di Home Assistant** grazie al sistema Ingress — nessuna configurazione aggiuntiva necessaria!
+
+Per aggiungerlo come scheda nella dashboard:
+- **Aggiungi scheda → Pagina Web**
+- URL: `/api/hassio_ingress/4016d9e7_compitapp/`
+
+> ⚠️ Non usare `http://IP:5002` come URL nella dashboard — non funziona dall'esterno e causa errori di mixed content con HTTPS.
 
 ---
 
 ## ❓ FAQ
 
 **Il bot non risponde ai comandi**
-→ Verifica che l'add-on sia avviato e che il token sia corretto nella configurazione.
+→ Verifica che l'add-on sia avviato e che il token sia corretto. Prova a riavviare l'add-on.
 
 **Non vedo i compiti nella PWA**
 → Clicca il pulsante 🔄 Sync in alto a destra. Il primo sync può richiedere qualche secondo.
@@ -186,10 +213,16 @@ Dopo l'avvio, la PWA è accessibile a:
 → È normale, il sistema lo gestisce correttamente anche in minuscolo.
 
 **Posso usare CompitAPP con più figli?**
-→ Sì! Aggiungi più voci nella sezione `studenti` della configurazione.
+→ Sì! Aggiungi più voci nella sezione `studenti` della configurazione. Ogni figlio avrà i propri sensori HA e le proprie notifiche.
 
 **Lo studente riceve i voti?**
-→ No, se configuri `studente_chat_id` separatamente, lo studente riceve solo compiti e reminder — mai voti, assenze o note disciplinari.
+→ No. Se configuri `studente_chat_id`, lo studente riceve solo compiti e reminder — mai voti, assenze o note disciplinari.
+
+**La PWA non si apre dall'esterno**
+→ Usa la barra laterale di HA o il pulsante "Apri interfaccia utente Web" dalla pagina dell'add-on. CompitAPP usa l'Ingress di HA che funziona anche da remoto tramite HTTPS.
+
+**Non ricevo le notifiche automatiche**
+→ Verifica che i `chat_id` siano corretti nelle opzioni. Puoi testare manualmente scrivendo `/resoconto` al bot.
 
 ---
 
@@ -202,6 +235,8 @@ Se trovi un bug o hai una richiesta, apri una [Issue su GitHub](https://github.c
 <div align="center">
 
 Fatto con ❤️ per i genitori italiani
+
+by [@elbarto8383](https://github.com/elbarto8383)
 
 **[⬆ Torna su](#-compitapp--home-assistant-add-on)**
 
