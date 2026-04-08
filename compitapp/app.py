@@ -7,17 +7,6 @@ from models import init_db, get_db
 from argo_client import get_studenti
 
 # Redirect errori su stdout per vederli nei log HA
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-    print("=" * 50)
-    print("[FATAL ERROR] Eccezione non gestita:")
-    traceback.print_exception(exc_type, exc_value, exc_traceback)
-    print("=" * 50)
-
-sys.excepthook = handle_exception
-
 from scheduler import avvia_scheduler
 from bot import avvia_bot
 
