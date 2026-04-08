@@ -45,7 +45,28 @@ load_config()
 from scheduler import avvia_scheduler
 from bot import avvia_bot
 
+# Legge l'ingress path da HA (es. /api/hassio_ingress/abc123/)
+INGRESS_PATH = os.environ.get('INGRESS_PATH', '').rstrip('/')
+
 app = Flask(__name__)
+
+# Supporto Ingress — riscrive tutte le route con il prefisso
+if INGRESS_PATH:
+    print(f"[CONFIG] Ingress path: {INGRESS_PATH}")
+    from werkzeug.middleware.dispatcher import DispatcherMiddleware
+    from werkzeug.wrappers import Response
+
+    class IngressMiddleware:
+        def __init__(self, flask_app, ingress_path):
+            self.app = flask_app
+            self.path = ingress_path
+
+        def __call__(self, environ, start_response):
+            path = environ.get('PATH_INFO', '')
+            if path.startswith(self.path):
+                environ['PATH_INFO'] = path[len(self.path):] or '/'
+                environ['SCRIPT_NAME'] = self.path
+            return self.app(environ, start_response)
 
 def _maschera_token(token):
     """Mostra solo i primi 10 caratteri del token"""
@@ -278,11 +299,6 @@ if __name__ == '__main__':
     init_db()
     avvia_bot()
     avvia_scheduler()
-    # Supporto Ingress HA — legge il path prefix dall'env
-    ingress_path = os.environ.get('INGRESS_PATH', '')
-    if ingress_path:
-        app.config['APPLICATION_ROOT'] = ingress_path
-        from werkzeug.middleware.proxy_fix import ProxyFix
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
-        print(f"[CONFIG] Ingress path: {ingress_path}")
+    if INGRESS_PATH:
+        app.wsgi_app = IngressMiddleware(app.wsgi_app, INGRESS_PATH)
     app.run(host='0.0.0.0', port=5002, debug=False)
