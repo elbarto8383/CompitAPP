@@ -4,11 +4,11 @@ WORKDIR /app
 
 RUN apk add --no-cache gcc musl-dev libffi-dev
 
-COPY requirements.txt .
+COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY app/ .
 
 EXPOSE 5002
 
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5002", "--workers", "1", "--threads", "4", "--timeout", "120", "--keep-alive", "5", "app:app"]

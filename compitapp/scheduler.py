@@ -251,9 +251,15 @@ def _aggiorna_sensori(nome):
     except Exception as e:
         print(f"[SCHEDULER] Errore sensori {nome}: {e}")
 
+def heartbeat():
+    """Log ogni 5 minuti per verificare che lo scheduler giri"""
+    from datetime import datetime
+    print(f"[SCHEDULER] ❤️ Heartbeat — {datetime.now().strftime('%H:%M:%S')}")
+
 def avvia_scheduler():
     scheduler = BackgroundScheduler(timezone=TZ)
     scheduler.add_job(sync_tutto, 'interval', minutes=POLLING_MINUTI, id='sync_tutto')
+    scheduler.add_job(heartbeat, 'interval', minutes=5, id='heartbeat')
     try:
         ora, minuto = ORARIO_REMINDER.split(':')
         scheduler.add_job(reminder_sera, CronTrigger(hour=int(ora), minute=int(minuto)), id='reminder_sera')

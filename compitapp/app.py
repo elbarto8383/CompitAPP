@@ -295,10 +295,12 @@ def api_stats():
         'ultimo_sync': ultimo['creato_il'] if ultimo else 'Mai'
     })
 
+# Inizializzazione all'avvio — eseguita sia con python che con gunicorn
+init_db()
+avvia_bot()
+avvia_scheduler()
+if INGRESS_PATH:
+    app.wsgi_app = IngressMiddleware(app.wsgi_app, INGRESS_PATH)
+
 if __name__ == '__main__':
-    init_db()
-    avvia_bot()
-    avvia_scheduler()
-    if INGRESS_PATH:
-        app.wsgi_app = IngressMiddleware(app.wsgi_app, INGRESS_PATH)
     app.run(host='0.0.0.0', port=5002, debug=False)
