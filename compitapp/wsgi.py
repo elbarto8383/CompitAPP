@@ -48,11 +48,19 @@ app.wsgi_app = ProxyFix(
     x_prefix=1  # Questo è il campo chiave — legge X-Ingress-Path header
 )
 
-print("[WSGI] Inizializzazione...")
-init_db()
-avvia_bot()
-avvia_scheduler()
-print("[WSGI] ✅ Pronto!")
+import threading
+
+def inizializza():
+    import time
+    time.sleep(2)  # Aspetta che Gunicorn sia pronto
+    print("[WSGI] Inizializzazione...")
+    init_db()
+    avvia_bot()
+    avvia_scheduler()
+    print("[WSGI] ✅ Pronto!")
+
+# Avvia inizializzazione in background — non blocca Gunicorn
+threading.Thread(target=inizializza, daemon=True).start()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=False)
