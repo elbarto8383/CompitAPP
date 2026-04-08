@@ -278,4 +278,11 @@ if __name__ == '__main__':
     init_db()
     avvia_bot()
     avvia_scheduler()
+    # Supporto Ingress HA — legge il path prefix dall'env
+    ingress_path = os.environ.get('INGRESS_PATH', '')
+    if ingress_path:
+        app.config['APPLICATION_ROOT'] = ingress_path
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+        print(f"[CONFIG] Ingress path: {ingress_path}")
     app.run(host='0.0.0.0', port=5002, debug=False)
