@@ -5,46 +5,6 @@ from datetime import date, timedelta
 from models import init_db, get_db
 from argo_client import get_studenti
 
-def load_config():
-    config_path = '/data/options.json'
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r') as f:
-                cfg = json.load(f)
-            os.environ['TELEGRAM_TOKEN']      = str(cfg.get('telegram_token', ''))
-            # Costruisce telegram_chat_ids dai campi individuali
-            ids = []
-            g1 = str(cfg.get('genitore1_chat_id', '')).strip()
-            g2 = str(cfg.get('genitore2_chat_id', '')).strip()
-            if g1: ids.append(g1)
-            if g2: ids.append(g2)
-            # Fallback al vecchio campo telegram_chat_ids se presente
-            if not ids:
-                old_ids = str(cfg.get('telegram_chat_ids', '')).strip()
-                if old_ids: ids = [x.strip() for x in old_ids.replace('\n',',').split(',') if x.strip()]
-            os.environ['TELEGRAM_CHAT_IDS']   = ','.join(ids)
-            os.environ['GENITORE1_NOME']      = str(cfg.get('genitore1_nome', 'Genitore 1'))
-            os.environ['GENITORE1_CHAT_ID']   = g1
-            os.environ['GENITORE2_NOME']      = str(cfg.get('genitore2_nome', 'Genitore 2'))
-            os.environ['GENITORE2_CHAT_ID']   = g2
-            os.environ['STUDENTE_NOME']       = str(cfg.get('studente_nome', 'Studente'))
-            os.environ['STUDENTE_CHAT_ID']    = str(cfg.get('studente_chat_id', '')).strip()
-            os.environ['SOGLIA_VOTO']         = str(cfg.get('soglia_voto_alert', 7))
-            os.environ['ORARIO_REMINDER']     = str(cfg.get('orario_reminder_sera', '20:00'))
-            os.environ['POLLING_MINUTI']      = str(cfg.get('polling_intervallo_minuti', 30))
-            os.environ['STUDENTI']            = json.dumps(cfg.get('studenti', []))
-            os.environ['ANNO_SCOLASTICO']     = str(cfg.get('anno_scolastico', '2025/2026'))
-            print(f"[CONFIG] ✅ Token: {os.environ['TELEGRAM_TOKEN'][:15]}...")
-            print(f"[CONFIG] Chat IDs: {os.environ['TELEGRAM_CHAT_IDS']}")
-            print(f"[CONFIG] Studente Chat ID: {os.environ['STUDENTE_CHAT_ID']}")
-        except Exception as e:
-            print(f"[CONFIG] Errore: {e}")
-
-import traceback
-import sys
-
-load_config()
-
 # Redirect errori su stdout per vederli nei log HA
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
