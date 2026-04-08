@@ -37,6 +37,16 @@ from models import init_db
 from bot import avvia_bot
 from scheduler import avvia_scheduler
 from app import app
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+# ProxyFix gestisce automaticamente i prefissi dell'Ingress di HA
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1,
+    x_proto=1,
+    x_host=1,
+    x_prefix=1  # Questo è il campo chiave — legge X-Ingress-Path header
+)
 
 print("[WSGI] Inizializzazione...")
 init_db()

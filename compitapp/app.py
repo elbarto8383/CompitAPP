@@ -38,63 +38,7 @@ def _media(voti):
 def healthz():
     return 'OK', 200
 
-# Route Ingress HA — gestisce prefisso /app/<slug>/pagina
-@app.route('/app/<slug>/')
-@app.route('/app/<slug>')
-def ingress_home(slug):
-    return index()
 
-@app.route('/app/<slug>/calendario')
-def ingress_calendario(slug):
-    return calendario()
-
-@app.route('/app/<slug>/voti')
-def ingress_voti(slug):
-    return voti()
-
-@app.route('/app/<slug>/orario')
-def ingress_orario(slug):
-    return orario()
-
-@app.route('/app/<slug>/bacheca')
-def ingress_bacheca(slug):
-    return bacheca()
-
-@app.route('/app/<slug>/assenze')
-def ingress_assenze(slug):
-    return assenze()
-
-@app.route('/app/<slug>/argomenti')
-def ingress_argomenti(slug):
-    return argomenti()
-
-@app.route('/app/<slug>/configurazione')
-def ingress_configurazione(slug):
-    return configurazione()
-
-@app.route('/app/<slug>/api/sync', methods=['POST'])
-def ingress_sync(slug):
-    return api_sync()
-
-@app.route('/app/<slug>/api/stats')
-def ingress_stats(slug):
-    return api_stats()
-
-@app.route('/app/<slug>/api/test-connessione', methods=['POST'])
-def ingress_test_conn(slug):
-    return api_test_connessione()
-
-@app.route('/app/<slug>/api/test-telegram', methods=['POST'])
-def ingress_test_tg(slug):
-    return api_test_telegram()
-
-@app.route('/app/<slug>/api/test-broadcast', methods=['POST'])
-def ingress_broadcast(slug):
-    return api_test_broadcast()
-
-@app.route('/app/<slug>/api/reset-db', methods=['POST'])
-def ingress_reset(slug):
-    return api_reset_db()
 
 @app.route('/')
 def index():
