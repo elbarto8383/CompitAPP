@@ -60,28 +60,7 @@ sys.excepthook = handle_exception
 from scheduler import avvia_scheduler
 from bot import avvia_bot
 
-# Legge l'ingress path da HA (es. /api/hassio_ingress/abc123/)
-INGRESS_PATH = os.environ.get('INGRESS_PATH', '').rstrip('/')
-
 app = Flask(__name__)
-
-# Supporto Ingress — riscrive tutte le route con il prefisso
-if INGRESS_PATH:
-    print(f"[CONFIG] Ingress path: {INGRESS_PATH}")
-    from werkzeug.middleware.dispatcher import DispatcherMiddleware
-    from werkzeug.wrappers import Response
-
-    class IngressMiddleware:
-        def __init__(self, flask_app, ingress_path):
-            self.app = flask_app
-            self.path = ingress_path
-
-        def __call__(self, environ, start_response):
-            path = environ.get('PATH_INFO', '')
-            if path.startswith(self.path):
-                environ['PATH_INFO'] = path[len(self.path):] or '/'
-                environ['SCRIPT_NAME'] = self.path
-            return self.app(environ, start_response)
 
 def _maschera_token(token):
     """Mostra solo i primi 10 caratteri del token"""
