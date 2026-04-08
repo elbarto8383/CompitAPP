@@ -37,17 +37,6 @@ from models import init_db
 from bot import avvia_bot
 from scheduler import avvia_scheduler
 from app import app
-from werkzeug.middleware.proxy_fix import ProxyFix
-
-# ProxyFix gestisce automaticamente i prefissi dell'Ingress di HA
-app.wsgi_app = ProxyFix(
-    app.wsgi_app,
-    x_for=1,
-    x_proto=1,
-    x_host=1,
-    x_prefix=1  # Questo è il campo chiave — legge X-Ingress-Path header
-)
-
 import threading
 
 def inizializza():
@@ -63,4 +52,5 @@ def inizializza():
 threading.Thread(target=inizializza, daemon=True).start()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002, debug=False)
+    print("[APP] ✅ Avvio Flask threaded sulla porta 5002...")
+    app.run(host='0.0.0.0', port=5002, debug=False, threaded=True)
