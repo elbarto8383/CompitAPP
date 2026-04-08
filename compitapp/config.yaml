@@ -51,8 +51,11 @@ schema:
 ingress: true
 ingress_port: 5002
 ingress_entry: /
-ingress_stream: false
 panel_icon: mdi:bookshelf
 panel_title: CompitAPP
+ports:
+  5002/tcp: 5002
+ports_description:
+  5002/tcp: "CompitAPP Web UI"
 map:
   - config:rw
