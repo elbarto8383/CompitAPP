@@ -1,10 +1,11 @@
-"""Entry point Gunicorn"""
+"""Entry point principale CompitAPP"""
 import sys
 import os
+import json
+
 sys.path.insert(0, '/app')
 
-# Carica configurazione prima di tutto
-import json
+# Carica configurazione
 config_path = '/data/options.json'
 if os.path.exists(config_path):
     with open(config_path) as f:
@@ -30,27 +31,21 @@ if os.path.exists(config_path):
     os.environ['POLLING_MINUTI']    = str(cfg.get('polling_intervallo_minuti', 30))
     os.environ['STUDENTI']          = json.dumps(cfg.get('studenti', []))
     os.environ['ANNO_SCOLASTICO']   = str(cfg.get('anno_scolastico', '2025/2026'))
-    print(f"[WSGI] Config caricata — Token: {os.environ['TELEGRAM_TOKEN'][:15]}...")
-    print(f"[WSGI] Chat IDs: {os.environ['TELEGRAM_CHAT_IDS']}")
+    print(f"[CONFIG] ✅ Token: {os.environ['TELEGRAM_TOKEN'][:15]}...")
+    print(f"[CONFIG] Chat IDs: {os.environ['TELEGRAM_CHAT_IDS']}")
 
 from models import init_db
 from bot import avvia_bot
 from scheduler import avvia_scheduler
 from app import app
-import threading
 
-def inizializza():
-    import time
-    time.sleep(2)  # Aspetta che Gunicorn sia pronto
-    print("[WSGI] Inizializzazione...")
-    init_db()
-    avvia_bot()
-    avvia_scheduler()
-    print("[WSGI] ✅ Pronto!")
-
-# Avvia inizializzazione in background — non blocca Gunicorn
-threading.Thread(target=inizializza, daemon=True).start()
+# Inizializza PRIMA di avviare Flask
+print("[APP] Inizializzazione...")
+init_db()
+avvia_bot()
+avvia_scheduler()
+print("[APP] ✅ Pronto!")
 
 if __name__ == '__main__':
-    print("[APP] ✅ Avvio Flask threaded sulla porta 5002...")
+    print("[APP] Avvio Flask threaded sulla porta 5002...")
     app.run(host='0.0.0.0', port=5002, debug=False, threaded=True)
