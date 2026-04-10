@@ -173,10 +173,18 @@ function toggleToken() {
     f.type = f.type === 'password' ? 'text' : 'password';
 }
 
+function getApiBase() {
+    // Costruisce il base path per le API
+    const path = window.location.pathname;
+    // Rimuove l'ultima parte del path (es. /configurazione)
+    const base = path.replace(/\/[^\/]*$/, '');
+    return base;
+}
+
 async function testConnessione() {
     document.getElementById('test-result').innerHTML = '⏳ Test in corso...';
     try {
-        const r = await fetch('./api/test-connessione', {method:'POST'});
+        const r = await fetch(getApiBase() + '/api/test-connessione', {method:'POST'});
         const d = await r.json();
         document.getElementById('test-result').innerHTML = d.ok
             ? `✅ <b>Connesso!</b> Trovati ${d.n_compiti} compiti nel registro.`
@@ -187,7 +195,7 @@ async function testConnessione() {
 async function testMsg(chatId, nome) {
     showToast(`📨 Invio test a ${nome}...`);
     try {
-        const r = await fetch('./api/test-telegram', {
+        const r = await fetch(getApiBase() + '/api/test-telegram', {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({chat_id: chatId, nome: nome})
         });
@@ -199,7 +207,7 @@ async function testMsg(chatId, nome) {
 async function testBroadcast() {
     showToast('📨 Invio broadcast...');
     try {
-        const r = await fetch('./api/test-broadcast', {method:'POST'});
+        const r = await fetch(getApiBase() + '/api/test-broadcast', {method:'POST'});
         const d = await r.json();
         showToast(d.ok ? `✅ Inviato a ${d.n} destinatari!` : '❌ Errore broadcast');
     } catch(e) { showToast('❌ Errore'); }
@@ -207,7 +215,7 @@ async function testBroadcast() {
 
 async function resetDB() {
     if (!confirm('⚠️ Sei sicuro? Verranno eliminati tutti i dati locali. I dati su DiDUP restano intatti.')) return;
-    const r = await fetch('./api/reset-db', {method:'POST'});
+    const r = await fetch(getApiBase() + '/api/reset-db', {method:'POST'});
     const d = await r.json();
     showToast(d.ok ? '✅ DB resettato — ricarico...' : '❌ Errore reset');
     if (d.ok) setTimeout(() => location.reload(), 1500);
@@ -215,7 +223,7 @@ async function resetDB() {
 
 async function loadStats() {
     try {
-        const r = await fetch('./api/stats');
+        const r = await fetch(getApiBase() + '/api/stats');
         const d = await r.json();
         document.getElementById('stats-content').innerHTML = `
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
