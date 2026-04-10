@@ -261,6 +261,25 @@ def api_stats():
         'ultimo_sync': ultimo['creato_il'] if ultimo else 'Mai'
     })
 
+# Route API con prefisso Ingress HA
+@app.route('/app/<slug>/api/sync', methods=['POST'])
+def ingress_api_sync(slug): return api_sync()
+
+@app.route('/app/<slug>/api/stats')
+def ingress_api_stats(slug): return api_stats()
+
+@app.route('/app/<slug>/api/test-connessione', methods=['POST'])
+def ingress_api_test_conn(slug): return api_test_connessione()
+
+@app.route('/app/<slug>/api/test-telegram', methods=['POST'])
+def ingress_api_test_tg(slug): return api_test_telegram()
+
+@app.route('/app/<slug>/api/test-broadcast', methods=['POST'])
+def ingress_api_broadcast(slug): return api_test_broadcast()
+
+@app.route('/app/<slug>/api/reset-db', methods=['POST'])
+def ingress_api_reset(slug): return api_reset_db()
+
 if __name__ == '__main__':
     init_db()
     avvia_bot()
