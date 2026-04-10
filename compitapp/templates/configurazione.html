@@ -178,10 +178,14 @@ function toggleToken() {
 }
 
 function getApiBase() {
-    // L'URL dell'Ingress è sempre /app/<slug>/ senza cambiare
-    // Quindi usiamo direttamente window.location.pathname senza togliere nulla
-    const path = window.location.pathname.replace(/\/$/, ''); // Rimuove slash finale
-    return path;
+    // Rimuove l'ultimo segmento del path per ottenere la base
+    // Es: /api/hassio_ingress/TOKEN/configurazione → /api/hassio_ingress/TOKEN
+    // Es: /app/4016d9e7_compitapp/configurazione → /app/4016d9e7_compitapp
+    // Es: /configurazione → ''
+    const path = window.location.pathname;
+    const segments = path.replace(/\/+$/, '').split('/');
+    segments.pop(); // Rimuove 'configurazione'
+    return segments.join('/');
 }
 
 async function testConnessione() {
