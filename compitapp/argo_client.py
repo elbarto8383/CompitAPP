@@ -34,29 +34,56 @@ def _reset_session(nome):
     _sessions.pop(nome, None)
 
 def fetch_dashboard(studente):
-    """Recupera tutti i dati in una sola chiamata"""
+    """Recupera tutti i dati in una sola chiamata — con retry automatico"""
     nome = studente.get('nome', 'default')
-    try:
-        session = get_session(studente)
-        if not session:
+    for tentativo in range(3):
+        try:
+            session = get_session(studente)
+            if not session:
+                return None
+            data = session.dashboard(useExactDatetime=False)
+            if data is None and tentativo < 2:
+                print(f"[ARGO] Risposta vuota dashboard {nome} — retry {tentativo+1}/3")
+                _reset_session(nome)
+                continue
+            return data
+        except ValueError as e:
+            print(f"[ARGO] Sessione scaduta {nome} — rinnovo dashboard (tentativo {tentativo+1}/3)")
+            _reset_session(nome)
+            if tentativo == 2:
+                print(f"[ARGO] ❌ Impossibile recuperare dashboard {nome} dopo 3 tentativi")
+                return None
+        except Exception as e:
+            print(f"[ARGO] Errore dashboard {nome}: {e}")
+            _reset_session(nome)
             return None
-        data = session.dashboard(useExactDatetime=False)
-        return data
-    except Exception as e:
-        print(f"[ARGO] Errore dashboard {nome}: {e}")
-        _reset_session(nome)
-        return None
+    return None
 
 def fetch_compiti(studente):
-    try:
-        session = get_session(studente)
-        if not session:
+    nome = studente.get('nome', '')
+    for tentativo in range(3):  # Fino a 3 tentativi
+        try:
+            session = get_session(studente)
+            if not session:
+                return {}
+            risultato = session.getCompitiByDate()
+            if risultato is None and tentativo < 2:
+                print(f"[ARGO] Risposta vuota compiti {nome} — retry {tentativo+1}/3")
+                _reset_session(nome)
+                continue
+            return risultato or {}
+        except ValueError as e:
+            # Risposta JSON vuota — sessione scaduta
+            print(f"[ARGO] Sessione scaduta {nome} — rinnovo (tentativo {tentativo+1}/3)")
+            _reset_session(nome)
+            if tentativo == 2:
+                print(f"[ARGO] ❌ Impossibile recuperare compiti {nome} dopo 3 tentativi")
+                return {}
+        except Exception as e:
+            print(f"[ARGO] Errore compiti {nome}: {e}")
+            _reset_session(nome)
             return {}
-        return session.getCompitiByDate() or {}
-    except Exception as e:
-        print(f"[ARGO] Errore compiti {studente.get('nome')}: {e}")
-        _reset_session(studente.get('nome', ''))
-        return {}
+    return {}
 
 def fetch_voti(studente):
     """Estrae voti dalla dashboard"""

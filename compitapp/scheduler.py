@@ -32,12 +32,15 @@ def sync_compiti():
                 continue
             conn = get_db()
             nuovi = {}
+            tot_trovati = 0
             for data_str, info in compiti_raw.items():
                 for materia, testo in zip(info.get('materie',[]), info.get('compiti',[])):
                     testo_clean = testo.strip()
+                    tot_trovati += 1
                     if not _esiste(conn, 'compiti', nome, data=data_str, materia=materia, testo=testo_clean[:500]):
                         conn.execute('INSERT INTO compiti (studente,data,materia,testo) VALUES (?,?,?,?)',
                                      (nome, data_str, materia, testo_clean[:1000]))
+                        print(f"[SCHEDULER] 🆕 Nuovo compito {nome}: {materia} per {data_str}")
                         try:
                             if datetime.strptime(data_str, '%Y-%m-%d').date() >= date.today():
                                 nuovi.setdefault(data_str, {'materie':[], 'compiti':[]})
@@ -47,8 +50,11 @@ def sync_compiti():
                             pass
             conn.commit()
             conn.close()
+            print(f"[SCHEDULER] Compiti {nome}: {tot_trovati} trovati, {sum(len(v['materie']) for v in nuovi.values())} nuovi")
             if nuovi:
                 notifica_nuovi_compiti(nome, nuovi)
+            else:
+                print(f"[SCHEDULER] Nessun compito nuovo per {nome}")
             _aggiorna_sensori(nome)
         except Exception as e:
             print(f"[SCHEDULER] Errore compiti {nome}: {e}")
