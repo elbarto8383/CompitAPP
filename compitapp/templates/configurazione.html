@@ -174,11 +174,10 @@ function toggleToken() {
 }
 
 function getApiBase() {
-    // Costruisce il base path per le API
-    const path = window.location.pathname;
-    // Rimuove l'ultima parte del path (es. /configurazione)
-    const base = path.replace(/\/[^\/]*$/, '');
-    return base;
+    // L'URL dell'Ingress è sempre /app/<slug>/ senza cambiare
+    // Quindi usiamo direttamente window.location.pathname senza togliere nulla
+    const path = window.location.pathname.replace(/\/$/, ''); // Rimuove slash finale
+    return path;
 }
 
 async function testConnessione() {
