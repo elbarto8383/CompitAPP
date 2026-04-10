@@ -261,24 +261,52 @@ def api_stats():
         'ultimo_sync': ultimo['creato_il'] if ultimo else 'Mai'
     })
 
-# Route API con prefisso Ingress HA
+# Route API — prefisso /app/<slug>/
 @app.route('/app/<slug>/api/sync', methods=['POST'])
 def ingress_api_sync(slug): return api_sync()
-
 @app.route('/app/<slug>/api/stats')
 def ingress_api_stats(slug): return api_stats()
-
 @app.route('/app/<slug>/api/test-connessione', methods=['POST'])
 def ingress_api_test_conn(slug): return api_test_connessione()
-
 @app.route('/app/<slug>/api/test-telegram', methods=['POST'])
 def ingress_api_test_tg(slug): return api_test_telegram()
-
 @app.route('/app/<slug>/api/test-broadcast', methods=['POST'])
 def ingress_api_broadcast(slug): return api_test_broadcast()
-
 @app.route('/app/<slug>/api/reset-db', methods=['POST'])
 def ingress_api_reset(slug): return api_reset_db()
+
+# Route API — prefisso /api/hassio_ingress/<token>/
+@app.route('/api/hassio_ingress/<token>/api/sync', methods=['POST'])
+def hassio_api_sync(token): return api_sync()
+@app.route('/api/hassio_ingress/<token>/api/stats')
+def hassio_api_stats(token): return api_stats()
+@app.route('/api/hassio_ingress/<token>/api/test-connessione', methods=['POST'])
+def hassio_api_test_conn(token): return api_test_connessione()
+@app.route('/api/hassio_ingress/<token>/api/test-telegram', methods=['POST'])
+def hassio_api_test_tg(token): return api_test_telegram()
+@app.route('/api/hassio_ingress/<token>/api/test-broadcast', methods=['POST'])
+def hassio_api_broadcast(token): return api_test_broadcast()
+@app.route('/api/hassio_ingress/<token>/api/reset-db', methods=['POST'])
+def hassio_api_reset(token): return api_reset_db()
+
+# Route pagine — prefisso /api/hassio_ingress/<token>/
+@app.route('/api/hassio_ingress/<token>/')
+@app.route('/api/hassio_ingress/<token>')
+def hassio_home(token): return index()
+@app.route('/api/hassio_ingress/<token>/calendario')
+def hassio_calendario(token): return calendario()
+@app.route('/api/hassio_ingress/<token>/voti')
+def hassio_voti(token): return voti()
+@app.route('/api/hassio_ingress/<token>/orario')
+def hassio_orario(token): return orario()
+@app.route('/api/hassio_ingress/<token>/bacheca')
+def hassio_bacheca(token): return bacheca()
+@app.route('/api/hassio_ingress/<token>/assenze')
+def hassio_assenze(token): return assenze()
+@app.route('/api/hassio_ingress/<token>/argomenti')
+def hassio_argomenti(token): return argomenti()
+@app.route('/api/hassio_ingress/<token>/configurazione')
+def hassio_configurazione(token): return configurazione()
 
 if __name__ == '__main__':
     init_db()
