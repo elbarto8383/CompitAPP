@@ -234,6 +234,8 @@ def fetch_registro(studente, giorni=0):
         try:
             registro = _estrai_registro(_dashboard_dal(studente, giorni))
             if registro:
+                giorni_visti = len({str(r.get('datGiorno'))[:10] for r in registro})
+                print(f"[ARGO] Registro {nome}: richiesta con storico di {giorni} giorni → {len(registro)} righe su {giorni_visti} giorni")
                 return registro
             print(f"[ARGO] Registro {nome}: risposta vuota con storico di {giorni} giorni, uso la dashboard normale")
         except Exception as e:

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.10
+
+- Il recupero dello storico del registro parte subito (al primo controllo dopo l'avvio) invece di attendere fino a un'ora, e si ripete a ogni controllo finché l'archivio delle lezioni non ha almeno 10 giorni.
+- Nei registri dell'app compare quanti giorni di lezioni restituisce Argo quando si chiede lo storico.
+
 ## 1.0.9
 
 - **Orario completo fin dal primo avvio (tentativo)**: la lettura del registro chiedeva ad Argo solo le novità di oggi, quindi arrivava un solo giorno alla volta. Ora CompitAPP chiede anche i giorni passati (fino a 60 giorni, la prima volta) e ricostruisce subito l'orario completo. Se Argo non risponde in questo modo, usa il metodo precedente, che accumula un giorno alla volta.
