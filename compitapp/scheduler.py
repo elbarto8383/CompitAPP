@@ -241,7 +241,11 @@ def sync_orario():
                         continue
                 except Exception:
                     pass
-            registro = fetch_registro(studente)
+            conn = get_db()
+            n_giorni = conn.execute('SELECT COUNT(DISTINCT data) AS n FROM lezioni_registro WHERE studente=?', (nome,)).fetchone()['n']
+            conn.close()
+            # Archivio ancora povero: chiedo ad Argo anche i giorni passati; poi bastano gli ultimi giorni
+            registro = fetch_registro(studente, giorni=60 if n_giorni < 10 else 7)
             date_viste = sorted({str(r.get('datGiorno'))[:10] for r in registro if r.get('datGiorno')})
             conn = get_db()
             nuove = _archivia_lezioni(conn, nome, registro)

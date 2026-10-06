@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.9
+
+- **Orario completo fin dal primo avvio (tentativo)**: la lettura del registro chiedeva ad Argo solo le novità di oggi, quindi arrivava un solo giorno alla volta. Ora CompitAPP chiede anche i giorni passati (fino a 60 giorni, la prima volta) e ricostruisce subito l'orario completo. Se Argo non risponde in questo modo, usa il metodo precedente, che accumula un giorno alla volta.
+- Dopo il primo recupero basta controllare gli ultimi giorni, così le richieste restano leggere.
+- Nei registri dell'app compare quanti giorni di lezioni ha ricevuto da Argo.
+
 ## 1.0.8
 
 - **Orario che si completa giorno dopo giorno**: Argo restituisce soltanto le lezioni degli ultimi giorni, quindi prima l'orario poteva mostrare un solo giorno e, aggiornandosi, perdere i precedenti. Ora CompitAPP conserva le lezioni viste e ricostruisce l'orario da tutto lo storico: ogni giorno di scuola ne aggiunge uno, e dopo circa una settimana è completo.

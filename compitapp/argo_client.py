@@ -201,16 +201,49 @@ def fetch_argomenti(studente):
         print(f"[ARGO] Errore parsing argomenti: {e}")
         return []
 
-def fetch_registro(studente):
-    """Lezioni del registro così come le restituisce Argo (lista di dict con datGiorno, ora, materia, docente)"""
+def _estrai_registro(dashboard):
+    registro = []
+    for sezione in (dashboard or {}).get('data', {}).get('dati', []):
+        registro.extend(sezione.get('registro', []))
+    return registro
+
+def _dashboard_dal(studente, giorni):
+    """Dashboard con "novità dal" spostato indietro di `giorni` giorni.
+    La libreria chiede solo le novità di oggi (00:00), quindi il registro contiene
+    soltanto le lezioni di oggi: con una data più vecchia Argo restituisce anche i giorni precedenti."""
+    import datetime
+    import requests
+    from argofamiglia.CONSTANTS import ENDPOINT, DASHBOARD_OPTIONS
+    session = get_session(studente)
+    if not session:
+        return None
+    dal = datetime.datetime.now() - datetime.timedelta(days=giorni)
+    risposta = requests.post(
+        ENDPOINT + "dashboard/dashboard",
+        headers=session._ArgoFamiglia__headers,
+        json={"dataultimoaggiornamento": dal.strftime("%Y-%m-%d 00:00:00"),
+              "opzioni": json.dumps(DASHBOARD_OPTIONS)},
+        timeout=60)
+    return risposta.json()
+
+def fetch_registro(studente, giorni=0):
+    """Lezioni del registro (lista di dict con datGiorno, ora, materia, docente).
+    Con `giorni` > 0 prova a recuperare anche i giorni passati; se non riesce usa la dashboard normale."""
+    nome = studente.get('nome', 'default')
+    if giorni:
+        try:
+            registro = _estrai_registro(_dashboard_dal(studente, giorni))
+            if registro:
+                return registro
+            print(f"[ARGO] Registro {nome}: risposta vuota con storico di {giorni} giorni, uso la dashboard normale")
+        except Exception as e:
+            print(f"[ARGO] Registro {nome}: storico non disponibile ({e}), uso la dashboard normale")
+            _reset_session(nome)
     dashboard = fetch_dashboard(studente)
     if not dashboard:
         return []
     try:
-        registro = []
-        for sezione in dashboard.get('data', {}).get('dati', []):
-            registro.extend(sezione.get('registro', []))
-        return registro
+        return _estrai_registro(dashboard)
     except Exception as e:
         print(f"[ARGO] Errore lettura registro: {e}")
         return []
