@@ -164,13 +164,14 @@ def sync_sensori_ha(nome, stats):
     headers = {'Authorization': f'Bearer {SUPERVISOR_TOKEN}', 'Content-Type': 'application/json'}
     slug = nome.lower().replace(' ','_')
     base = 'http://supervisor/core/api/states'
+    det = stats.get('dettagli') or {}
     sensori = {
-        f'sensor.compitapp_{slug}_compiti_oggi':    {'state': stats.get('compiti_oggi',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Compiti oggi', 'icon': 'mdi:book-open'}},
-        f'sensor.compitapp_{slug}_compiti_domani':  {'state': stats.get('compiti_domani',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Compiti domani', 'icon': 'mdi:book-clock'}},
-        f'sensor.compitapp_{slug}_assenze':         {'state': stats.get('assenze_totali',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Assenze', 'icon': 'mdi:account-off'}},
-        f'sensor.compitapp_{slug}_bacheca':         {'state': stats.get('bacheca_non_lette',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Bacheca', 'icon': 'mdi:bulletin-board'}},
-        f'sensor.compitapp_{slug}_ultimo_voto':     {'state': stats.get('ultimo_voto','N/D'), 'attributes': {'friendly_name': f'CompitAPP {nome} - Ultimo voto', 'materia': stats.get('ultima_materia',''), 'icon': 'mdi:star'}},
-        f'sensor.compitapp_{slug}_media_voti':      {'state': stats.get('media_voti','N/D'), 'attributes': {'friendly_name': f'CompitAPP {nome} - Media voti', 'icon': 'mdi:chart-line'}},
+        f'sensor.compitapp_{slug}_compiti_oggi':    {'state': stats.get('compiti_oggi',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Compiti oggi', 'icon': 'mdi:book-open', 'unit_of_measurement': 'compiti', 'elenco': det.get('compiti_oggi', [])}},
+        f'sensor.compitapp_{slug}_compiti_domani':  {'state': stats.get('compiti_domani',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Compiti domani', 'icon': 'mdi:book-clock', 'unit_of_measurement': 'compiti', 'elenco': det.get('compiti_domani', [])}},
+        f'sensor.compitapp_{slug}_assenze':         {'state': stats.get('assenze_totali',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Assenze', 'icon': 'mdi:account-off', 'elenco': det.get('assenze', [])}},
+        f'sensor.compitapp_{slug}_bacheca':         {'state': stats.get('bacheca_non_lette',0), 'attributes': {'friendly_name': f'CompitAPP {nome} - Bacheca', 'icon': 'mdi:bulletin-board', 'elenco': det.get('bacheca', [])}},
+        f'sensor.compitapp_{slug}_ultimo_voto':     {'state': stats.get('ultimo_voto','N/D'), 'attributes': {'friendly_name': f'CompitAPP {nome} - Ultimo voto', 'materia': stats.get('ultima_materia',''), 'icon': 'mdi:star', 'elenco': det.get('voti', [])}},
+        f'sensor.compitapp_{slug}_media_voti':      {'state': stats.get('media_voti','N/D'), 'attributes': {'friendly_name': f'CompitAPP {nome} - Media voti', 'icon': 'mdi:chart-line', 'medie': det.get('medie', [])}},
     }
     for entity_id, payload in sensori.items():
         try:

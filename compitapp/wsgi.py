@@ -38,6 +38,22 @@ if os.path.exists(config_path):
     print(f"[CONFIG] ✅ Token: {os.environ['TELEGRAM_TOKEN'][:15]}...")
     print(f"[CONFIG] Chat IDs: {os.environ['TELEGRAM_CHAT_IDS']}")
 
+def installa_card():
+    """Copia la card Lovelace in /config/www/compitapp/ (si vede come /local/compitapp/compitapp-card.js)"""
+    import shutil
+    sorgente = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'card', 'compitapp-card.js')
+    destinazione = '/config/www/compitapp'
+    try:
+        if not os.path.isdir('/config'):
+            return
+        os.makedirs(destinazione, exist_ok=True)
+        shutil.copyfile(sorgente, os.path.join(destinazione, 'compitapp-card.js'))
+        print("[CARD] ✅ Card installata: aggiungi la risorsa /local/compitapp/compitapp-card.js (tipo: modulo JavaScript)")
+    except Exception as e:
+        print(f"[CARD] Non riesco a installare la card ({e}). Puoi copiarla a mano da GitHub: compitapp/card/compitapp-card.js")
+
+installa_card()
+
 from models import init_db
 from bot import avvia_bot
 from scheduler import avvia_scheduler

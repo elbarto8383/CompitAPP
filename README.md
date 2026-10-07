@@ -39,6 +39,15 @@ Essendo dentro Home Assistant, i dati diventano anche **sensori** (compiti di og
 
 ## ✨ Funzionalità
 
+### 🧭 In sintesi
+
+- 📱 **Pagina web** per compiti, calendario, voti, orario, bacheca, assenze e lezioni, dentro Home Assistant e usabile anche da telefono
+- 🤖 **Bot Telegram** con comandi e **notifiche automatiche** (compiti, voti, assenze, bacheca, note)
+- 🌙 **Riepilogo serale** intelligente e personalizzabile
+- 👨‍👩‍👧‍👦 **Più figli**, anche con lo stesso account DiDUP, ognuno con le sue notifiche
+- 🏠 **Sensori** per automazioni e dashboard
+- 🃏 **Card per la dashboard** con popup di dettaglio (novità 2.0)
+
 ### 📱 Pagina web (PWA) — usabile da browser, iPhone e Android
 
 | Scheda | Contenuto |
@@ -94,8 +103,76 @@ Argo non rende disponibile l'orario settimanale in modo diretto. CompitAPP lo **
 
 ### 🏠 Sensori Home Assistant
 
-Per ogni studente vengono creati automaticamente:
-`sensor.compitapp_<nome>_compiti_oggi`, `_compiti_domani`, `_ultimo_voto`, `_media_voti`, `_assenze`, `_bacheca`.
+Per ogni studente vengono creati automaticamente (il nome è scritto in minuscolo, con `_` al posto degli spazi: "Luigi Rossi" → `luigi_rossi`):
+
+| Sensore | Valore | Contenuto dell'attributo |
+|---|---|---|
+| `sensor.compitapp_<nome>_compiti_oggi` | numero di compiti | `elenco`: materia e testo di ogni compito |
+| `sensor.compitapp_<nome>_compiti_domani` | numero di compiti | `elenco`: materia e testo |
+| `sensor.compitapp_<nome>_ultimo_voto` | ultimo voto | `elenco`: ultimi 15 voti (data, materia, voto, commento) |
+| `sensor.compitapp_<nome>_media_voti` | media generale | `medie`: media e numero di voti per materia |
+| `sensor.compitapp_<nome>_assenze` | totale assenze | `elenco`: assenze, ritardi, uscite (data, tipo, giustificata) |
+| `sensor.compitapp_<nome>_bacheca` | avvisi degli ultimi 30 giorni | `elenco`: ultime comunicazioni (titolo, mittente, testo) |
+
+I sensori si aggiornano a ogni controllo del registro, quindi puoi usarli in automazioni, notifiche e dashboard come qualsiasi altro sensore.
+
+### 🃏 Card per la dashboard (novità 2.0)
+
+CompitAPP include una **card per Home Assistant** pronta all'uso, senza installare nulla da HACS: sei tessere (compiti di oggi e domani, ultimo voto, media, assenze, bacheca) e, **toccando una tessera, si apre un popup con il dettaglio** (i compiti da fare materia per materia, i voti con commento, la media per materia, le assenze da giustificare, le comunicazioni).
+
+<div align="center">
+<img src="docs/screenshots/card-home.png" width="220" alt="Card CompitAPP">
+<img src="docs/screenshots/card-popup-compiti.png" width="220" alt="Popup dei compiti">
+<img src="docs/screenshots/card-popup-voti.png" width="220" alt="Popup dei voti">
+</div>
+
+#### Come installarla (3 passaggi, una sola volta)
+
+1. **Aggiorna CompitAPP alla 2.0 e riavvialo.** All'avvio l'app copia da sola la card nella cartella `www` di Home Assistant (nei registri trovi la riga `[CARD] ✅ Card installata`).
+2. Vai su **Impostazioni → Dashboard → ⋮ (in alto a destra) → Risorse** → **Aggiungi risorsa**:
+   - URL: `/local/compitapp/compitapp-card.js`
+   - Tipo: **Modulo JavaScript**
+
+   *Non vedi «Risorse»?* Attiva la **modalità avanzata** nel tuo profilo utente (clicca il tuo nome in basso a sinistra → «Modalità avanzata»). Se `www` non esisteva già, riavvia Home Assistant una volta.
+3. Modifica la dashboard → **Aggiungi card → Manuale** e incolla:
+
+```yaml
+type: custom:compitapp-card
+students:
+  - name: Giorgia          # esattamente il nome scritto in CompitAPP (maiuscole non importanti)
+    photo: /local/giorgia.jpg   # facoltativo
+  - name: Claudia
+open_url: /hassio/ingress/compitapp   # facoltativo: aggiunge il bottone "Apri CompitAPP"
+```
+
+Con **più figli** compaiono i pulsanti per passare dall'uno all'altro. Con **un solo figlio** puoi scrivere più semplicemente:
+
+```yaml
+type: custom:compitapp-card
+student: Luca Rossi
+```
+
+Per mostrare la foto copia l'immagine nella cartella `www` di Home Assistant (ad esempio con l'app *File editor* o *Samba*): sarà raggiungibile come `/local/nome-file.jpg`. L'indirizzo per `open_url` lo vedi aprendo CompitAPP dalla barra laterale (di solito `/hassio/ingress/` seguito dallo *slug* dell'app).
+
+> La card usa i colori del tuo tema (chiaro o scuro) e si adatta al telefono. Se preferisci creare la tua, tutti i dati sono nei sensori qui sopra: ad esempio con `custom:button-card` e `browser_mod` puoi aprire un popup personalizzato leggendo l'attributo `elenco`.
+
+#### Esempi di automazioni con i sensori
+
+```yaml
+# Avviso in casa quando ci sono compiti per domani
+trigger:
+  - platform: numeric_state
+    entity_id: sensor.compitapp_giorgia_compiti_domani
+    above: 0
+```
+
+```yaml
+# Elenco dei compiti in una notifica o su un display
+message: >
+  {% for c in state_attr('sensor.compitapp_giorgia_compiti_domani', 'elenco') %}
+  • {{ c.materia }}: {{ c.testo }}
+  {% endfor %}
+```
 
 ## 📸 Screenshot
 
@@ -172,11 +249,28 @@ studenti:
     codice_scuola: "SC12345"      # codice scuola (dalla segreteria o dall'app DiDUP)
     username: "l.rossi"           # username DiDUP
     password: "la_tua_password"
+    alunno:                       # SOLO se un account DiDUP ha più figli (vedi sotto)
     chat_id: ""                   # facoltativo: Chat ID Telegram di questo ragazzo/a
                                   # (riceve compiti, riepilogo, bacheca e promemoria; mai i voti)
 ```
 
 Con più figli aggiungi una voce per ciascuno, ognuno con il proprio `chat_id`: ogni ragazzo riceve solo le sue notifiche.
+
+**Due figli con lo stesso account DiDUP?** Se la scuola ti ha dato un solo accesso che mostra entrambi i figli, crea due voci con le stesse credenziali e nel campo `alunno` scrivi `1` per il primo figlio e `2` per il secondo (nello stesso ordine in cui li vedi nell'app DiDUP). Senza questo campo i dati dei due figli si mescolerebbero. Se i due risultano scambiati, inverti i numeri.
+
+```yaml
+studenti:
+  - nome: "Giorgia"
+    codice_scuola: "SC12345"
+    username: "famiglia.rossi"
+    password: "la_tua_password"
+    alunno: 1
+  - nome: "Luca"
+    codice_scuola: "SC12345"
+    username: "famiglia.rossi"
+    password: "la_tua_password"
+    alunno: 2
+```
 
 > Il campo `anno_scolastico` presente nella configurazione non viene più usato: l'anno è calcolato in automatico.
 
@@ -232,7 +326,19 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 → Viene ricostruito dalle lezioni registrate dai docenti: servono alcuni giorni di scuola già annotati sul registro. Se un'ora manca, probabilmente il docente non l'ha ancora registrata.
 
 **Posso usarlo con più figli?**
-→ Sì: aggiungi più voci in `studenti`. Ognuno ha sensori e notifiche propri.
+→ Sì: aggiungi più voci in `studenti`. Ognuno ha sensori e notifiche propri. Se i figli hanno lo stesso account DiDUP usa il campo `alunno` (1, 2…): vedi [Configurazione](#️-configurazione).
+
+**Voti e media sono sempre «N/D», le assenze a 0**
+→ Alle elementari i voti spesso non si usano e le assenze si azzerano a fine anno: se il registro non li contiene, CompitAPP non può mostrarli. Nei registri dell'app compare quanti voti arrivano da Argo (`Voti Nome: N ricevuti da Argo`).
+
+**La card non compare / dice «Custom element doesn't exist»**
+→ Controlla di aver aggiunto la risorsa `/local/compitapp/compitapp-card.js` come *Modulo JavaScript*, di aver riavviato CompitAPP dopo l'aggiornamento e di aver ricaricato la pagina (Ctrl+F5, o svuota la cache dell'app su telefono).
+
+**La card mostra «–» al posto dei numeri**
+→ Il nome in `students` deve essere quello scritto in CompitAPP. Controlla in **Strumenti per sviluppatori → Stati** che esista `sensor.compitapp_<nome>_compiti_oggi`.
+
+**Funziona con altri registri (Nuvola, Axios, ClasseViva…)?**
+→ Per ora solo DiDUP/Argo: è l'unico che posso provare. L'idea di un sistema a «connettori» per altri registri è benvenuta: apri una issue o proponi una pull request.
 
 **Lo studente riceve i voti?**
 → No: con `studente_chat_id` riceve solo compiti, riepilogo, bacheca e promemoria.

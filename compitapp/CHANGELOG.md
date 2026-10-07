@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0
+
+- **Nuova card per la dashboard di Home Assistant** (`custom:compitapp-card`), inclusa nell'app e senza dipendenze da HACS: tessere per compiti di oggi e domani, ultimo voto, media, assenze e bacheca. **Toccando una tessera si apre un popup** con il dettaglio: compiti materia per materia, voti con commento, media per materia, assenze da giustificare, comunicazioni. Con più figli ci sono i pulsanti per passare dall'uno all'altro.
+- All'avvio l'app copia la card in `/config/www/compitapp/`. Una sola volta devi aggiungerla come risorsa (`/local/compitapp/compitapp-card.js`, tipo «Modulo JavaScript»): istruzioni complete nel README.
+- I sensori ora hanno gli elenchi come attributi (`elenco`, `medie`): utili anche per automazioni, notifiche e card tue.
+- README riscritto: panoramica, installazione della card, più figli con lo stesso account, esempi di automazioni, FAQ.
+
 ## 1.0.14
 
 - Più figli con lo stesso account DiDUP: nuovo campo facoltativo `alunno` dentro ogni studente (1 = primo figlio, 2 = secondo, come nell'app DiDUP). Prima i dati dei figli si mescolavano e su Telegram arrivavano gli stessi compiti. Nei registri l'app avvisa se l'account contiene più alunni e il campo non è compilato.

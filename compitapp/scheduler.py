@@ -380,6 +380,39 @@ def reminder_sera():
         except Exception as e:
             print(f"[SCHEDULER] Errore reminder {nome}: {e}")
 
+def _taglia(s, n=400):
+    s = str(s or '').strip()
+    return s if len(s) <= n else s[:n - 1] + '…'
+
+
+def _dettagli_sensori(conn, nome, oggi, domani):
+    """Elenchi per il popup della card (attributo `elenco` dei sensori). Tenuti corti:
+    Home Assistant sconsiglia attributi molto grandi."""
+    def compiti(giorno):
+        return [{'materia': r['materia'], 'testo': _taglia(r['testo'])} for r in conn.execute(
+            'SELECT materia, testo FROM compiti WHERE studente=? AND data=? ORDER BY materia', (nome, giorno))]
+    voti = [{'data': r['data'], 'materia': r['materia'], 'voto': r['voto'], 'descrizione': _taglia(r['descrizione'], 150)}
+            for r in conn.execute(
+                "SELECT data, materia, voto, descrizione FROM voti WHERE studente=? "
+                "AND voto NOT IN ('0','0.0','0,0','N','') ORDER BY data DESC, id DESC LIMIT 15", (nome,))]
+    per_materia = {}
+    for r in conn.execute("SELECT materia, voto FROM voti WHERE studente=? AND voto NOT IN ('0','0.0','0,0','N','')", (nome,)):
+        try:
+            per_materia.setdefault(r['materia'], []).append(float(str(r['voto']).replace(',', '.')))
+        except Exception:
+            pass
+    medie = sorted(({'materia': m, 'media': round(sum(v) / len(v), 1), 'n': len(v)} for m, v in per_materia.items()),
+                   key=lambda x: x['materia'])
+    assenze = [{'data': r['data'], 'tipo': r['tipo'], 'descrizione': _taglia(r['descrizione'], 150),
+                'giustificata': bool(r['giustificata'])} for r in conn.execute(
+                'SELECT data, tipo, descrizione, giustificata FROM assenze WHERE studente=? ORDER BY data DESC, id DESC LIMIT 20', (nome,))]
+    bacheca = [{'data': r['data'], 'titolo': _taglia(r['titolo'], 120), 'mittente': r['mittente'] or '',
+                'testo': _taglia(r['testo'], 500)} for r in conn.execute(
+                'SELECT data, titolo, testo, mittente FROM bacheca WHERE studente=? ORDER BY data DESC, id DESC LIMIT 8', (nome,))]
+    return {'compiti_oggi': compiti(oggi), 'compiti_domani': compiti(domani), 'voti': voti,
+            'medie': medie, 'assenze': assenze, 'bacheca': bacheca}
+
+
 def _aggiorna_sensori(nome):
     try:
         oggi = date.today().strftime('%Y-%m-%d')
@@ -391,6 +424,7 @@ def _aggiorna_sensori(nome):
         n_bacheca = conn.execute('SELECT COUNT(*) as n FROM bacheca WHERE studente=? AND data>=?', (nome, (date.today() - timedelta(days=30)).strftime('%Y-%m-%d'))).fetchone()['n']
         ultimo_voto = conn.execute("SELECT voto, materia FROM voti WHERE studente=? AND voto NOT IN ('0','0.0','0,0','N','') ORDER BY data DESC, id DESC LIMIT 1", (nome,)).fetchone()
         tutti_voti = conn.execute("SELECT voto FROM voti WHERE studente=? AND voto NOT IN ('0','0.0','0,0','N','')", (nome,)).fetchall()
+        dettagli = _dettagli_sensori(conn, nome, oggi, domani)
         conn.close()
         valori = []
         for v in tutti_voti:
@@ -404,7 +438,8 @@ def _aggiorna_sensori(nome):
             'assenze_totali': n_assenze, 'bacheca_non_lette': n_bacheca,
             'ultimo_voto': ultimo_voto['voto'] if ultimo_voto else 'N/D',
             'ultima_materia': ultimo_voto['materia'] if ultimo_voto else '',
-            'media_voti': media
+            'media_voti': media,
+            'dettagli': dettagli
         })
     except Exception as e:
         print(f"[SCHEDULER] Errore sensori {nome}: {e}")
