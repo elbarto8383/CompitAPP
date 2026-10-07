@@ -139,7 +139,7 @@ CompitAPP include una **card per Home Assistant** pronta all'uso, senza installa
 ```yaml
 type: custom:compitapp-card
 students:
-  - name: Giorgia          # esattamente il nome scritto in CompitAPP (maiuscole non importanti)
+  - name: Giorgia          # il nome scritto in CompitAPP (anche solo il primo, se non ci sono omonimi)
     photo: /local/giorgia.jpg   # facoltativo
   - name: Claudia
 open_url: /hassio/ingress/compitapp   # facoltativo: aggiunge il bottone "Apri CompitAPP"
@@ -335,7 +335,7 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 → Controlla di aver aggiunto la risorsa `/local/compitapp/compitapp-card.js` come *Modulo JavaScript*, di aver riavviato CompitAPP dopo l'aggiornamento e di aver ricaricato la pagina (Ctrl+F5, o svuota la cache dell'app su telefono).
 
 **La card mostra «–» al posto dei numeri**
-→ Il nome in `students` deve essere quello scritto in CompitAPP. Controlla in **Strumenti per sviluppatori → Stati** che esista `sensor.compitapp_<nome>_compiti_oggi`.
+→ Il nome in `students` deve essere quello scritto in CompitAPP (o il suo inizio, es. `Luigi` per `Luigi di Grazia`); se hai nomi simili usa `entity_slug: luigi_di_grazia` (la parte centrale del nome del sensore). Controlla in **Strumenti per sviluppatori → Stati** che esista `sensor.compitapp_<nome>_compiti_oggi`.
 
 **Funziona con altri registri (Nuvola, Axios, ClasseViva…)?**
 → Per ora solo DiDUP/Argo: è l'unico che posso provare. L'idea di un sistema a «connettori» per altri registri è benvenuta: apri una issue o proponi una pull request.

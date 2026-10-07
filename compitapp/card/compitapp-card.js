@@ -59,7 +59,18 @@ class CompitappCard extends HTMLElement {
   static getStubConfig() { return { students: [{ name: 'Nome studente' }] }; }
 
   _stud() { return this._config && this._config.students[this._sel]; }
-  _eid(st, key) { return `sensor.compitapp_${_slug(st.name)}_${key}`; }
+  _slugDi(st) {
+    // 1) campo esplicito "entity_slug"; 2) nome identico; 3) unico sensore il cui nome inizia con quello scritto
+    if (st.entity_slug) return _slug(st.entity_slug);
+    const voluto = _slug(st.name);
+    if (!this._hass) return voluto;
+    const trovati = Object.keys(this._hass.states)
+      .map((k) => /^sensor\.compitapp_(.+)_compiti_oggi$/.exec(k)).filter(Boolean).map((m) => m[1]);
+    if (trovati.includes(voluto)) return voluto;
+    const simili = trovati.filter((x) => x.startsWith(voluto + '_') || voluto.startsWith(x + '_'));
+    return simili.length === 1 ? simili[0] : voluto;
+  }
+  _eid(st, key) { return `sensor.compitapp_${this._slugDi(st)}_${key}`; }
   _ent(key) { const st = this._stud(); return st && this._hass ? this._hass.states[this._eid(st, key)] : undefined; }
 
   _render() {
@@ -87,16 +98,39 @@ class CompitappCard extends HTMLElement {
         <div class="top">${chips}${apri}</div>
         <div class="head">${foto}<div><div class="nome">${_esc(st.name)}</div><div class="sub">registro DiDUP${aggiornato ? ' · ' + aggiornato : ''}</div></div></div>
         <div class="grid">${tiles}</div>
-        ${this._popup ? this._popupHtml() : ''}
       </ha-card>`;
-    this.shadowRoot.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => { this._sel = +b.dataset.i; this._popup = null; this._firma = null; this._render(); }));
-    this.shadowRoot.querySelectorAll('.tile').forEach((b) => b.addEventListener('click', () => { this._popup = b.dataset.k; this._render(); }));
-    const ov = this.shadowRoot.querySelector('.overlay');
-    if (ov) {
-      ov.addEventListener('click', (ev) => { if (ev.target === ov) { this._popup = null; this._render(); } });
-      this.shadowRoot.querySelector('.close').addEventListener('click', () => { this._popup = null; this._render(); });
-    }
+    this._mostraPopup();
+    this.shadowRoot.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => { this._sel = +b.dataset.i; this._chiudiPopup(); this._firma = null; this._render(); }));
+    this.shadowRoot.querySelectorAll('.tile').forEach((b) => b.addEventListener('click', () => { this._popup = b.dataset.k; this._mostraPopup(); }));
   }
+
+  _chiudiPopup() {
+    this._popup = null;
+    if (this._host) { this._host.remove(); this._host = null; }
+    if (this._onKey) { document.removeEventListener('keydown', this._onKey); this._onKey = null; }
+  }
+
+  // Il popup vive nel body della pagina (non dentro la card): così non viene tagliato
+  // dai temi con effetti "vetro" o trasformazioni.
+  _mostraPopup() {
+    if (this._host) { this._host.remove(); this._host = null; }
+    if (!this._popup) return;
+    const host = document.createElement('div');
+    const cs = getComputedStyle(this);
+    const vars = ['--primary-color', '--text-primary-color', '--primary-text-color', '--secondary-text-color',
+      '--card-background-color', '--secondary-background-color', '--divider-color']
+      .map((v) => `${v}:${cs.getPropertyValue(v)}`).join(';');
+    host.attachShadow({ mode: 'open' }).innerHTML = `<style>:host{${vars};font-family:var(--paper-font-body1_-_font-family,inherit)}${STILE}</style>${this._popupHtml()}`;
+    document.body.appendChild(host);
+    this._host = host;
+    const ov = host.shadowRoot.querySelector('.overlay');
+    ov.addEventListener('click', (ev) => { if (ev.target === ov) this._chiudiPopup(); });
+    host.shadowRoot.querySelector('.close').addEventListener('click', () => this._chiudiPopup());
+    this._onKey = (ev) => { if (ev.key === 'Escape') this._chiudiPopup(); };
+    document.addEventListener('keydown', this._onKey);
+  }
+
+  disconnectedCallback() { this._chiudiPopup(); }
 
   _popupHtml() {
     const t = TILES.find((x) => x.key === this._popup);

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1
+
+- Card: il popup ora si apre al centro dello schermo anche con i temi «a vetro» (prima restava tagliato dentro la card). Si chiude toccando fuori, con la X o con Esc.
+- Card: il nome dello studente può essere anche solo il primo (es. `Luigi` per `Luigi di Grazia`) se è l'unico a cominciare così; in alternativa si può indicare il nome esatto del sensore con `entity_slug`.
+
 ## 2.0.0
 
 - **Nuova card per la dashboard di Home Assistant** (`custom:compitapp-card`), inclusa nell'app e senza dipendenze da HACS: tessere per compiti di oggi e domani, ultimo voto, media, assenze e bacheca. **Toccando una tessera si apre un popup** con il dettaglio: compiti materia per materia, voti con commento, media per materia, assenze da giustificare, comunicazioni. Con più figli ci sono i pulsanti per passare dall'uno all'altro.
