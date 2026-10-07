@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.13
+
+- Corretto il problema per cui voti, assenze e media risultavano sempre a zero / N/D: l'app leggeva i nomi dei campi di una vecchia versione di Argo. Ora legge `voti` e `appello` (assenze, ritardi, uscite) e, per sicurezza, anche i vecchi nomi.
+- Le annotazioni dei docenti senza voto (valore 0) non vengono più contate come voti: non abbassano più la media e non fanno scattare avvisi di voto basso. Quelle già salvate vengono ripulite in automatico.
+- Le comunicazioni in bacheca senza titolo non vengono più scartate (come titolo si usa la categoria).
+- Grazie a chi ha segnalato il problema e passato i nomi dei campi reali.
+
 ## 1.0.12
 
 - Nei registri dell'app compare sempre quanti voti, assenze e comunicazioni arrivano da Argo e per quanti giorni (es. "Voti Nome: 5 ricevuti da Argo (ultimi 7 giorni)"), così si capisce subito se i dati arrivano o no.

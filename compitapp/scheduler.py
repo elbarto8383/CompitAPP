@@ -95,6 +95,8 @@ def sync_voti():
             giorni, silenzioso = prep
             conn = get_db()
             nuovi = 0
+            # pulizia: vecchie annotazioni senza voto salvate da versioni precedenti
+            conn.execute("DELETE FROM voti WHERE studente=? AND voto IN ('0','0.0','0,0','N')", (nome,))
             voti_raw = fetch_voti(studente, giorni)
             print(f"[SCHEDULER] Voti {nome}: {len(voti_raw)} ricevuti da Argo (ultimi {giorni} giorni)")
             for v in voti_raw:
@@ -387,8 +389,8 @@ def _aggiorna_sensori(nome):
         n_domani = conn.execute('SELECT COUNT(*) as n FROM compiti WHERE studente=? AND data=?', (nome, domani)).fetchone()['n']
         n_assenze = conn.execute('SELECT COUNT(*) as n FROM assenze WHERE studente=?', (nome,)).fetchone()['n']
         n_bacheca = conn.execute('SELECT COUNT(*) as n FROM bacheca WHERE studente=? AND data>=?', (nome, (date.today() - timedelta(days=30)).strftime('%Y-%m-%d'))).fetchone()['n']
-        ultimo_voto = conn.execute('SELECT voto, materia FROM voti WHERE studente=? ORDER BY data DESC, id DESC LIMIT 1', (nome,)).fetchone()
-        tutti_voti = conn.execute('SELECT voto FROM voti WHERE studente=?', (nome,)).fetchall()
+        ultimo_voto = conn.execute("SELECT voto, materia FROM voti WHERE studente=? AND voto NOT IN ('0','0.0','0,0','N','') ORDER BY data DESC, id DESC LIMIT 1", (nome,)).fetchone()
+        tutti_voti = conn.execute("SELECT voto FROM voti WHERE studente=? AND voto NOT IN ('0','0.0','0,0','N','')", (nome,)).fetchall()
         conn.close()
         valori = []
         for v in tutti_voti:

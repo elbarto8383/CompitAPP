@@ -115,8 +115,28 @@ def fetch_compiti(studente):
             return {}
     return {}
 
+def _pick(d, *chiavi, default=''):
+    """Primo campo valorizzato tra i nomi candidati (Argo cambia nomi tra versioni)."""
+    for k in chiavi:
+        v = d.get(k)
+        if v not in (None, ''):
+            return v
+    return default
+
+
+def _voto_valido(valore):
+    """True se e' un vero voto. Scarta le annotazioni senza voto (valore 0 / vuoto)."""
+    if valore in (None, ''):
+        return False
+    t = str(valore).strip().replace(',', '.')
+    try:
+        return float(t) > 0
+    except ValueError:
+        return t.upper() not in ('N', '-', '--')   # voti a giudizio (es. "Ottimo")
+
+
 def fetch_voti(studente, giorni=0):
-    """Estrae voti dalla dashboard"""
+    """Estrae voti dalla dashboard (lista 'voti', o 'votiGiornalieri' nelle versioni vecchie)"""
     dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
@@ -124,21 +144,29 @@ def fetch_voti(studente, giorni=0):
         voti = []
         dati = dashboard.get('data', {}).get('dati', [])
         for sezione in dati:
-            # Voti giornalieri
-            for v in sezione.get('votiGiornalieri', []):
+            for v in list(sezione.get('voti', []) or []) + list(sezione.get('votiGiornalieri', []) or []):
+                valore = _pick(v, 'valore', 'decValore', 'decVoto', 'codVoto')
+                if not _voto_valido(valore):
+                    continue
+                materia = _pick(v, 'desMateria', 'materia', 'descrizioneMateria')
+                if isinstance(materia, dict):
+                    materia = _pick(materia, 'descrizione', 'desMateria', 'nome')
                 voti.append({
-                    'data': v.get('datGiorno', ''),
-                    'materia': v.get('desMateria', ''),
-                    'voto': v.get('decVoto', '') or v.get('codVoto', ''),
-                    'descrizione': v.get('desCommento', '')
+                    'data': _pick(v, 'datGiorno', 'data', 'dataVoto'),
+                    'materia': materia or 'Materia',
+                    'voto': str(valore),
+                    'descrizione': _pick(v, 'desCommento', 'commento', 'descrizione', 'desProva')
                 })
         return voti
     except Exception as e:
         print(f"[ARGO] Errore parsing voti: {e}")
         return []
 
+def _bool_arg(v):
+    return v is True or str(v).upper() in ('S', 'TRUE', '1')
+
 def fetch_assenze(studente, giorni=0):
-    """Estrae assenze dalla dashboard"""
+    """Estrae assenze/ritardi/uscite (lista 'appello', o 'assenze' nelle versioni vecchie)"""
     dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
@@ -146,12 +174,12 @@ def fetch_assenze(studente, giorni=0):
         assenze = []
         dati = dashboard.get('data', {}).get('dati', [])
         for sezione in dati:
-            for a in sezione.get('assenze', []):
+            for a in list(sezione.get('appello', []) or []) + list(sezione.get('assenze', []) or []):
                 assenze.append({
-                    'data': a.get('datAssenza', ''),
-                    'tipo': a.get('codEvento', 'A'),  # A=assenza, R=ritardo, U=uscita
-                    'descrizione': a.get('desAssenza', ''),
-                    'giustificata': a.get('flgGiustificata', 'N') == 'S'
+                    'data': _pick(a, 'data', 'datAssenza'),
+                    'tipo': _pick(a, 'codEvento', default='A'),  # A=assenza, R=ritardo, U=uscita
+                    'descrizione': _pick(a, 'descrizione', 'desAssenza'),
+                    'giustificata': _bool_arg(_pick(a, 'giustificata', 'flgGiustificata', default='N'))
                 })
         return assenze
     except Exception as e:
@@ -178,6 +206,19 @@ def fetch_note(studente, giorni=0):
         print(f"[ARGO] Errore parsing note: {e}")
         return []
 
+def _msg_bacheca(msg):
+    testo = _pick(msg, 'messaggio', 'desMessaggio')
+    titolo = _pick(msg, 'desOggetto', 'titolo', 'oggetto', 'categoria')
+    if not titolo:
+        titolo = (str(testo).strip().splitlines() or [''])[0][:80] or 'Comunicazione'
+    return {
+        'data': _pick(msg, 'data', 'datPubblicazione'),
+        'titolo': titolo,
+        'testo': testo,
+        'mittente': _pick(msg, 'autore', 'desMittente'),
+        'uid': str(_pick(msg, 'pk', 'uid'))
+    }
+
 def fetch_bacheca(studente, giorni=0):
     """Estrae comunicazioni bacheca dalla dashboard"""
     dashboard = fetch_dashboard(studente, giorni)
@@ -187,23 +228,9 @@ def fetch_bacheca(studente, giorni=0):
         bacheca = []
         dati = dashboard.get('data', {}).get('dati', [])
         for sezione in dati:
-            for msg in sezione.get('bacheca', []):
-                bacheca.append({
-                    'data': msg.get('datPubblicazione', ''),
-                    'titolo': msg.get('desOggetto', ''),
-                    'testo': msg.get('desMessaggio', ''),
-                    'mittente': msg.get('desMittente', ''),
-                    'uid': msg.get('uid', '')
-                })
-            # Anche bacheca alunno
-            for msg in sezione.get('bachecaAlunno', []):
-                bacheca.append({
-                    'data': msg.get('datPubblicazione', ''),
-                    'titolo': msg.get('desOggetto', ''),
-                    'testo': msg.get('desMessaggio', ''),
-                    'mittente': msg.get('desMittente', ''),
-                    'uid': msg.get('uid', '')
-                })
+            for chiave in ('bacheca', 'bachecaAlunno'):
+                for msg in sezione.get(chiave, []) or []:
+                    bacheca.append(_msg_bacheca(msg))
         return bacheca
     except Exception as e:
         print(f"[ARGO] Errore parsing bacheca: {e}")
