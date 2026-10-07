@@ -95,7 +95,9 @@ def sync_voti():
             giorni, silenzioso = prep
             conn = get_db()
             nuovi = 0
-            for v in fetch_voti(studente, giorni):
+            voti_raw = fetch_voti(studente, giorni)
+            print(f"[SCHEDULER] Voti {nome}: {len(voti_raw)} ricevuti da Argo (ultimi {giorni} giorni)")
+            for v in voti_raw:
                 data_str = v.get('data','')
                 materia = v.get('materia','')
                 valore = str(v.get('voto',''))
@@ -126,7 +128,9 @@ def sync_assenze():
             giorni, silenzioso = prep
             conn = get_db()
             nuovi = 0
-            for a in fetch_assenze(studente, giorni):
+            assenze_raw = fetch_assenze(studente, giorni)
+            print(f"[SCHEDULER] Assenze {nome}: {len(assenze_raw)} ricevute da Argo (ultimi {giorni} giorni)")
+            for a in assenze_raw:
                 data_str = a.get('data','')
                 tipo = a.get('tipo','A')
                 desc = a.get('descrizione','')
@@ -183,7 +187,9 @@ def sync_bacheca():
             giorni, silenzioso = prep
             conn = get_db()
             nuovi = 0
-            for msg in fetch_bacheca(studente, giorni):
+            bacheca_raw = fetch_bacheca(studente, giorni)
+            print(f"[SCHEDULER] Bacheca {nome}: {len(bacheca_raw)} ricevute da Argo (ultimi {giorni} giorni)")
+            for msg in bacheca_raw:
                 uid = msg.get('uid','')
                 titolo = msg.get('titolo','')
                 testo = msg.get('testo','')

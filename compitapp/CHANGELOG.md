@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.12
+
+- Nei registri dell'app compare sempre quanti voti, assenze e comunicazioni arrivano da Argo e per quanti giorni (es. "Voti Nome: 5 ricevuti da Argo (ultimi 7 giorni)"), così si capisce subito se i dati arrivano o no.
+
 ## 1.0.11
 
 - **Voti, assenze e comunicazioni di bacheca ora si caricano anche se precedenti all'installazione**: la richiesta ad Argo restituiva solo le novità di "oggi", quindi un voto o un'assenza compariva soltanto se inserito dopo l'avvio dell'app. Per questo molti vedevano sempre "N/D" e "0" nei sensori. Ora al primo avvio viene letto tutto l'anno scolastico e poi gli ultimi 7 giorni.
