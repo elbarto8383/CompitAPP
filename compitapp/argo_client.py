@@ -36,6 +36,34 @@ def _reset_session(nome):
 
 _cache_dashboard = {}
 CACHE_SECONDI = 90
+_sezioni_loggate = set()
+
+
+def _filtra_alunno(studente, data):
+    """Un account Argo con più figli restituisce una sezione per alunno in data.dati.
+    Con il campo `alunno` (1 = primo, 2 = secondo...) teniamo solo quella dello studente."""
+    try:
+        dati = data.get('data', {}).get('dati', [])
+    except AttributeError:
+        return data
+    nome = studente.get('nome', 'default')
+    if len(dati) > 1 and nome not in _sezioni_loggate:
+        _sezioni_loggate.add(nome)
+        print(f"[ARGO] {nome}: l'account Argo contiene {len(dati)} alunni"
+              + ("" if studente.get('alunno') else " — compila il campo 'alunno' (1, 2...) per ogni figlio, altrimenti i dati si mescolano"))
+    try:
+        indice = int(studente.get('alunno') or 0)
+    except (TypeError, ValueError):
+        indice = 0
+    if indice and dati:
+        if indice > len(dati):
+            print(f"[ARGO] {nome}: alunno={indice} ma l'account ne ha {len(dati)}, uso l'ultimo")
+            indice = len(dati)
+        copia = dict(data)
+        copia['data'] = dict(data['data'])
+        copia['data']['dati'] = [dati[indice - 1]]
+        return copia
+    return data
 
 def fetch_dashboard(studente, giorni=0):
     """Dashboard di Argo. Con `giorni` > 0 chiede le novità dalle ultime `giorni` giornate
@@ -60,6 +88,7 @@ def fetch_dashboard(studente, giorni=0):
     if data is None:
         data = _dashboard_standard(studente)
     if data is not None:
+        data = _filtra_alunno(studente, data)
         _cache_dashboard[chiave] = (time.time(), data)
     return data
 

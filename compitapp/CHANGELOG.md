@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.14
+
+- Più figli con lo stesso account DiDUP: nuovo campo facoltativo `alunno` dentro ogni studente (1 = primo figlio, 2 = secondo, come nell'app DiDUP). Prima i dati dei figli si mescolavano e su Telegram arrivavano gli stessi compiti. Nei registri l'app avvisa se l'account contiene più alunni e il campo non è compilato.
+- I registri non stampano più le password degli studenti all'avvio.
+
 ## 1.0.13
 
 - Corretto il problema per cui voti, assenze e media risultavano sempre a zero / N/D: l'app leggeva i nomi dei campi di una vecchia versione di Argo. Ora legge `voti` e `appello` (assenze, ritardi, uscite) e, per sicurezza, anche i vecchi nomi.

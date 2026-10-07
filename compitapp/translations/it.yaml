@@ -60,6 +60,9 @@ configuration:
       password:
         name: Password DiDUP
         description: "La password del registro DiDUP. Resta salvata nel tuo Home Assistant."
+      alunno:
+        name: Numero alunno (solo se un account ha più figli)
+        description: "Se con lo stesso account DiDUP vedi più figli, scrivi 1 per il primo, 2 per il secondo (stesso ordine dell'app DiDUP). Lascia vuoto se l'account ha un solo figlio."
       chat_id:
         name: Chat ID Telegram dello studente (facoltativo)
         description: "Se lo compili, il ragazzo riceve su Telegram compiti, riepilogo serale, bacheca e promemoria, MAI voti, assenze o note. Lascia vuoto se non serve."

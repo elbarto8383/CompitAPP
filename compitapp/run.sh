@@ -27,7 +27,7 @@ echo "  TELEGRAM_CHAT_IDS  = $TELEGRAM_CHAT_IDS"
 echo "  SOGLIA_VOTO        = $SOGLIA_VOTO"
 echo "  ORARIO_REMINDER    = $ORARIO_REMINDER"
 echo "  POLLING_MINUTI     = $POLLING_MINUTI"
-echo "  STUDENTI           = $STUDENTI"
+echo "  STUDENTI           = $(echo "$STUDENTI" | jq -r 'length') configurati"
 
 echo "[run.sh] Avvio CompitAPP sulla porta 5002..."
 exec python3 /app/app.py
