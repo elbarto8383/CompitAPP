@@ -27,9 +27,13 @@
 
 ## 💡 Perché esiste
 
-Nella nostra esperienza, sul registro elettronico DiDUP può essere collegata **una sola persona alla volta** con le stesse credenziali: se un genitore apre l'app sul proprio telefono, l'altro viene disconnesso, e viceversa.
+Aprire l'app del registro più volte al giorno per controllare se ci sono novità è scomodo, e capita di accorgersi dei compiti all'ultimo momento.
 
-CompitAPP controlla il registro al posto tuo e **manda su Telegram** quello che conta: nuovi compiti, voti, assenze, comunicazioni. Entrambi i genitori (e, se vuoi, anche il ragazzo) restano informati senza dover aprire l'app del registro.
+CompitAPP controlla il registro al posto tuo e **ti avvisa su Telegram**: nuovi compiti, voti, assenze, comunicazioni della scuola e un riepilogo serale di quello che c'è da fare per domani. Entrambi i genitori (e, se vuoi, anche il ragazzo, che non vede mai i voti) restano informati senza aprire niente.
+
+Essendo dentro Home Assistant, i dati diventano anche **sensori** (compiti di oggi e di domani, ultimo voto, media, assenze) che puoi mostrare in una dashboard o usare nelle automazioni, e c'è una pagina web con tutto il registro, l'orario ricostruito e più figli in un colpo d'occhio.
+
+> Nella nostra esperienza, con le stesse credenziali sull'app DiDUP l'accesso di un secondo genitore può disconnettere il primo. Con CompitAPP entrambi ricevono le stesse informazioni senza usare l'app. Potrebbe dipendere dalla scuola: non è detto che succeda a tutti.
 
 ---
 
