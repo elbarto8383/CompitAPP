@@ -4,7 +4,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import pytz
 
-from argo_client import (get_studenti, fetch_compiti, fetch_voti, fetch_assenze,
+from argo_client import (get_studenti, fetch_dashboard, fetch_compiti, fetch_voti, fetch_assenze,
                          fetch_note, fetch_bacheca, fetch_argomenti, fetch_promemoria,
                          fetch_orario, fetch_registro)
 from models import get_db
@@ -60,25 +60,56 @@ def sync_compiti():
         except Exception as e:
             print(f"[SCHEDULER] Errore compiti {nome}: {e}")
 
+def _giorni_da_inizio_anno():
+    """Giorni dall'inizio dell'anno scolastico (1 settembre), con un piccolo margine"""
+    oggi = date.today()
+    inizio = date(oggi.year if oggi.month >= 9 else oggi.year - 1, 9, 1)
+    return min((oggi - inizio).days + 7, 400)
+
+def _prepara(studente, categoria):
+    """Finestra di lettura per una categoria di dati.
+    La prima volta (e finché Argo non risponde) si legge tutto l'anno scolastico e SENZA notifiche:
+    la richiesta standard restituisce solo le novità di oggi, quindi voti, assenze e comunicazioni
+    precedenti all'installazione non arrivavano mai. Poi bastano gli ultimi giorni.
+    Ritorna (giorni, silenzioso), oppure None se Argo non è raggiungibile."""
+    nome = studente.get('nome', 'Studente')
+    conn = get_db()
+    fatto = conn.execute('SELECT 1 FROM meta WHERE chiave=?', (f"storico:{categoria}:{nome}",)).fetchone() is not None
+    conn.close()
+    giorni, silenzioso = (7, False) if fatto else (_giorni_da_inizio_anno(), True)
+    if fetch_dashboard(studente, giorni) is None:
+        return None
+    return giorni, silenzioso
+
+def _storico_fatto(conn, categoria, nome):
+    conn.execute("INSERT OR REPLACE INTO meta (chiave, valore) VALUES (?, '1')", (f"storico:{categoria}:{nome}",))
+
 def sync_voti():
     print(f"[SCHEDULER] Sync voti — {datetime.now().strftime('%H:%M:%S')}")
     for studente in get_studenti():
         nome = studente.get('nome', 'Studente')
         try:
-            voti_raw = fetch_voti(studente)
-            if not voti_raw:
+            prep = _prepara(studente, 'voti')
+            if prep is None:
                 continue
+            giorni, silenzioso = prep
             conn = get_db()
-            for v in voti_raw:
+            nuovi = 0
+            for v in fetch_voti(studente, giorni):
                 data_str = v.get('data','')
                 materia = v.get('materia','')
                 valore = str(v.get('voto',''))
                 desc = v.get('descrizione','')
                 if data_str and materia and valore:
                     if not _esiste(conn, 'voti', nome, data=data_str, materia=materia, voto=valore):
-                        conn.execute('INSERT INTO voti (studente,data,materia,voto,descrizione) VALUES (?,?,?,?,?)',
-                                     (nome, data_str, materia, valore, desc))
-                        notifica_nuovo_voto(nome, materia, valore, desc)
+                        conn.execute('INSERT INTO voti (studente,data,materia,voto,descrizione,notificato) VALUES (?,?,?,?,?,?)',
+                                     (nome, data_str, materia, valore, desc, 1 if silenzioso else 0))
+                        nuovi += 1
+                        if not silenzioso:
+                            notifica_nuovo_voto(nome, materia, valore, desc)
+            if silenzioso:
+                _storico_fatto(conn, 'voti', nome)
+                print(f"[SCHEDULER] Voti {nome}: caricato lo storico ({nuovi} voti), senza notifiche")
             conn.commit()
             conn.close()
         except Exception as e:
@@ -89,20 +120,27 @@ def sync_assenze():
     for studente in get_studenti():
         nome = studente.get('nome', 'Studente')
         try:
-            assenze_raw = fetch_assenze(studente)
-            if not assenze_raw:
+            prep = _prepara(studente, 'assenze')
+            if prep is None:
                 continue
+            giorni, silenzioso = prep
             conn = get_db()
-            for a in assenze_raw:
+            nuovi = 0
+            for a in fetch_assenze(studente, giorni):
                 data_str = a.get('data','')
                 tipo = a.get('tipo','A')
                 desc = a.get('descrizione','')
                 giust = 1 if a.get('giustificata') else 0
                 if data_str and tipo:
                     if not _esiste(conn, 'assenze', nome, data=data_str, tipo=tipo):
-                        conn.execute('INSERT INTO assenze (studente,data,tipo,descrizione,giustificata) VALUES (?,?,?,?,?)',
-                                     (nome, data_str, tipo, desc, giust))
-                        notifica_assenza(nome, data_str, tipo)
+                        conn.execute('INSERT INTO assenze (studente,data,tipo,descrizione,giustificata,notificato) VALUES (?,?,?,?,?,?)',
+                                     (nome, data_str, tipo, desc, giust, 1 if silenzioso else 0))
+                        nuovi += 1
+                        if not silenzioso:
+                            notifica_assenza(nome, data_str, tipo)
+            if silenzioso:
+                _storico_fatto(conn, 'assenze', nome)
+                print(f"[SCHEDULER] Assenze {nome}: caricato lo storico ({nuovi}), senza notifiche")
             conn.commit()
             conn.close()
         except Exception as e:
@@ -112,19 +150,23 @@ def sync_note():
     for studente in get_studenti():
         nome = studente.get('nome', 'Studente')
         try:
-            note_raw = fetch_note(studente)
-            if not note_raw:
+            prep = _prepara(studente, 'note')
+            if prep is None:
                 continue
+            giorni, silenzioso = prep
             conn = get_db()
-            for n in note_raw:
+            for n in fetch_note(studente, giorni):
                 data_str = n.get('data','')
                 testo = n.get('testo','')
                 docente = n.get('docente','')
                 if data_str and testo:
                     if not _esiste(conn, 'note_disciplinari', nome, data=data_str, testo=testo[:200]):
-                        conn.execute('INSERT INTO note_disciplinari (studente,data,docente,testo) VALUES (?,?,?,?)',
-                                     (nome, data_str, docente, testo))
-                        notifica_nota(nome, data_str, docente, testo)
+                        conn.execute('INSERT INTO note_disciplinari (studente,data,docente,testo,notificato) VALUES (?,?,?,?,?)',
+                                     (nome, data_str, docente, testo, 1 if silenzioso else 0))
+                        if not silenzioso:
+                            notifica_nota(nome, data_str, docente, testo)
+            if silenzioso:
+                _storico_fatto(conn, 'note', nome)
             conn.commit()
             conn.close()
         except Exception as e:
@@ -135,11 +177,13 @@ def sync_bacheca():
     for studente in get_studenti():
         nome = studente.get('nome', 'Studente')
         try:
-            bacheca_raw = fetch_bacheca(studente)
-            if not bacheca_raw:
+            prep = _prepara(studente, 'bacheca')
+            if prep is None:
                 continue
+            giorni, silenzioso = prep
             conn = get_db()
-            for msg in bacheca_raw:
+            nuovi = 0
+            for msg in fetch_bacheca(studente, giorni):
                 uid = msg.get('uid','')
                 titolo = msg.get('titolo','')
                 testo = msg.get('testo','')
@@ -153,9 +197,14 @@ def sync_bacheca():
                     else:
                         exists = _esiste(conn, 'bacheca', nome, titolo=titolo[:200], data=data_str)
                     if not exists:
-                        conn.execute('INSERT INTO bacheca (studente,data,titolo,testo,mittente,uid) VALUES (?,?,?,?,?,?)',
-                                     (nome, data_str, titolo[:500], testo[:2000], mittente, uid))
-                        notifica_bacheca(nome, titolo, testo, mittente)
+                        conn.execute('INSERT INTO bacheca (studente,data,titolo,testo,mittente,uid,notificato) VALUES (?,?,?,?,?,?,?)',
+                                     (nome, data_str, titolo[:500], testo[:2000], mittente, uid, 1 if silenzioso else 0))
+                        nuovi += 1
+                        if not silenzioso:
+                            notifica_bacheca(nome, titolo, testo, mittente)
+            if silenzioso:
+                _storico_fatto(conn, 'bacheca', nome)
+                print(f"[SCHEDULER] Bacheca {nome}: caricato lo storico ({nuovi}), senza notifiche")
             conn.commit()
             conn.close()
         except Exception as e:
@@ -165,11 +214,12 @@ def sync_argomenti():
     for studente in get_studenti():
         nome = studente.get('nome', 'Studente')
         try:
-            args_raw = fetch_argomenti(studente)
-            if not args_raw:
+            prep = _prepara(studente, 'argomenti')
+            if prep is None:
                 continue
+            giorni, silenzioso = prep
             conn = get_db()
-            for a in args_raw:
+            for a in fetch_argomenti(studente, giorni):
                 data_str = a.get('data','')
                 materia = a.get('materia','')
                 argomento = a.get('argomento','')
@@ -178,6 +228,8 @@ def sync_argomenti():
                     if not _esiste(conn, 'argomenti', nome, data=data_str, materia=materia, argomento=argomento[:200]):
                         conn.execute('INSERT INTO argomenti (studente,data,materia,argomento,attivita) VALUES (?,?,?,?,?)',
                                      (nome, data_str, materia, argomento[:500], attivita[:500]))
+            if silenzioso:
+                _storico_fatto(conn, 'argomenti', nome)
             conn.commit()
             conn.close()
         except Exception as e:
@@ -187,19 +239,23 @@ def sync_promemoria():
     for studente in get_studenti():
         nome = studente.get('nome', 'Studente')
         try:
-            prom_raw = fetch_promemoria(studente)
-            if not prom_raw:
+            prep = _prepara(studente, 'promemoria')
+            if prep is None:
                 continue
+            giorni, silenzioso = prep
             conn = get_db()
-            for p in prom_raw:
+            for p in fetch_promemoria(studente, giorni):
                 data_str = p.get('data','')
                 testo = p.get('testo','')
                 docente = p.get('docente','')
                 if data_str and testo:
                     if not _esiste(conn, 'promemoria', nome, data=data_str, testo=testo[:200]):
-                        conn.execute('INSERT INTO promemoria (studente,data,testo,docente) VALUES (?,?,?,?)',
-                                     (nome, data_str, testo[:500], docente))
-                        notifica_promemoria(nome, data_str, docente, testo)
+                        conn.execute('INSERT INTO promemoria (studente,data,testo,docente,notificato) VALUES (?,?,?,?,?)',
+                                     (nome, data_str, testo[:500], docente, 1 if silenzioso else 0))
+                        if not silenzioso:
+                            notifica_promemoria(nome, data_str, docente, testo)
+            if silenzioso:
+                _storico_fatto(conn, 'promemoria', nome)
             conn.commit()
             conn.close()
         except Exception as e:
@@ -288,6 +344,8 @@ def sync_tutto():
     sync_argomenti()
     sync_promemoria()
     sync_orario()
+    for studente in get_studenti():
+        _aggiorna_sensori(studente.get('nome', 'Studente'))
 
 def _giorni_scuola(conn, nome):
     """Giorni della settimana (0=lun … 6=dom) con lezione, ricavati dall'orario ricostruito.
@@ -322,7 +380,7 @@ def _aggiorna_sensori(nome):
         n_oggi   = conn.execute('SELECT COUNT(*) as n FROM compiti WHERE studente=? AND data=?', (nome, oggi)).fetchone()['n']
         n_domani = conn.execute('SELECT COUNT(*) as n FROM compiti WHERE studente=? AND data=?', (nome, domani)).fetchone()['n']
         n_assenze = conn.execute('SELECT COUNT(*) as n FROM assenze WHERE studente=?', (nome,)).fetchone()['n']
-        n_bacheca = conn.execute('SELECT COUNT(*) as n FROM bacheca WHERE studente=? AND notificato=0', (nome,)).fetchone()['n']
+        n_bacheca = conn.execute('SELECT COUNT(*) as n FROM bacheca WHERE studente=? AND data>=?', (nome, (date.today() - timedelta(days=30)).strftime('%Y-%m-%d'))).fetchone()['n']
         ultimo_voto = conn.execute('SELECT voto, materia FROM voti WHERE studente=? ORDER BY data DESC, id DESC LIMIT 1', (nome,)).fetchone()
         tutti_voti = conn.execute('SELECT voto FROM voti WHERE studente=?', (nome,)).fetchall()
         conn.close()

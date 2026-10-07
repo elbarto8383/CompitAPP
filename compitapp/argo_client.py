@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from argofamiglia import ArgoFamiglia
 
 def get_studenti():
@@ -33,8 +34,37 @@ def get_session(studente):
 def _reset_session(nome):
     _sessions.pop(nome, None)
 
-def fetch_dashboard(studente):
-    """Recupera tutti i dati in una sola chiamata — con retry automatico"""
+_cache_dashboard = {}
+CACHE_SECONDI = 90
+
+def fetch_dashboard(studente, giorni=0):
+    """Dashboard di Argo. Con `giorni` > 0 chiede le novità dalle ultime `giorni` giornate
+    (la richiesta standard restituisce soltanto quelle di oggi); se non riesce usa la standard.
+    Il risultato è riusato per qualche secondo: un ciclo di sincronizzazione fa molte letture."""
+    nome = studente.get('nome', 'default')
+    chiave = (nome, giorni)
+    voce = _cache_dashboard.get(chiave)
+    if voce and time.time() - voce[0] < CACHE_SECONDI:
+        return voce[1]
+    data = None
+    if giorni:
+        try:
+            data = _dashboard_dal(studente, giorni)
+            if not (isinstance(data, dict) and data.get('data')):
+                print(f"[ARGO] Dashboard {nome}: risposta vuota con storico di {giorni} giorni, uso quella standard")
+                data = None
+        except Exception as e:
+            print(f"[ARGO] Dashboard {nome}: storico non disponibile ({e}), uso quella standard")
+            _reset_session(nome)
+            data = None
+    if data is None:
+        data = _dashboard_standard(studente)
+    if data is not None:
+        _cache_dashboard[chiave] = (time.time(), data)
+    return data
+
+def _dashboard_standard(studente):
+    """Dashboard standard (solo le novità di oggi) — con retry automatico"""
     nome = studente.get('nome', 'default')
     for tentativo in range(3):
         try:
@@ -85,9 +115,9 @@ def fetch_compiti(studente):
             return {}
     return {}
 
-def fetch_voti(studente):
+def fetch_voti(studente, giorni=0):
     """Estrae voti dalla dashboard"""
-    dashboard = fetch_dashboard(studente)
+    dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
     try:
@@ -107,9 +137,9 @@ def fetch_voti(studente):
         print(f"[ARGO] Errore parsing voti: {e}")
         return []
 
-def fetch_assenze(studente):
+def fetch_assenze(studente, giorni=0):
     """Estrae assenze dalla dashboard"""
-    dashboard = fetch_dashboard(studente)
+    dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
     try:
@@ -128,9 +158,9 @@ def fetch_assenze(studente):
         print(f"[ARGO] Errore parsing assenze: {e}")
         return []
 
-def fetch_note(studente):
+def fetch_note(studente, giorni=0):
     """Estrae note disciplinari dalla dashboard"""
-    dashboard = fetch_dashboard(studente)
+    dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
     try:
@@ -148,9 +178,9 @@ def fetch_note(studente):
         print(f"[ARGO] Errore parsing note: {e}")
         return []
 
-def fetch_bacheca(studente):
+def fetch_bacheca(studente, giorni=0):
     """Estrae comunicazioni bacheca dalla dashboard"""
-    dashboard = fetch_dashboard(studente)
+    dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
     try:
@@ -179,9 +209,9 @@ def fetch_bacheca(studente):
         print(f"[ARGO] Errore parsing bacheca: {e}")
         return []
 
-def fetch_argomenti(studente):
+def fetch_argomenti(studente, giorni=0):
     """Estrae argomenti lezione dalla dashboard"""
-    dashboard = fetch_dashboard(studente)
+    dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
     try:
@@ -228,24 +258,16 @@ def _dashboard_dal(studente, giorni):
 
 def fetch_registro(studente, giorni=0):
     """Lezioni del registro (lista di dict con datGiorno, ora, materia, docente).
-    Con `giorni` > 0 prova a recuperare anche i giorni passati; se non riesce usa la dashboard normale."""
+    Con `giorni` > 0 prova a recuperare anche i giorni passati."""
     nome = studente.get('nome', 'default')
-    if giorni:
-        try:
-            registro = _estrai_registro(_dashboard_dal(studente, giorni))
-            if registro:
-                giorni_visti = len({str(r.get('datGiorno'))[:10] for r in registro})
-                print(f"[ARGO] Registro {nome}: richiesta con storico di {giorni} giorni → {len(registro)} righe su {giorni_visti} giorni")
-                return registro
-            print(f"[ARGO] Registro {nome}: risposta vuota con storico di {giorni} giorni, uso la dashboard normale")
-        except Exception as e:
-            print(f"[ARGO] Registro {nome}: storico non disponibile ({e}), uso la dashboard normale")
-            _reset_session(nome)
-    dashboard = fetch_dashboard(studente)
-    if not dashboard:
-        return []
     try:
-        return _estrai_registro(dashboard)
+        registro = _estrai_registro(fetch_dashboard(studente, giorni))
+        if registro and giorni:
+            giorni_visti = len({str(r.get('datGiorno'))[:10] for r in registro})
+            print(f"[ARGO] Registro {nome}: richiesta con storico di {giorni} giorni → {len(registro)} righe su {giorni_visti} giorni")
+        if not registro and giorni:
+            registro = _estrai_registro(fetch_dashboard(studente))
+        return registro
     except Exception as e:
         print(f"[ARGO] Errore lettura registro: {e}")
         return []
@@ -255,9 +277,9 @@ def fetch_orario(studente):
     from orario_utils import ricostruisci_orario
     return ricostruisci_orario(fetch_registro(studente))
 
-def fetch_promemoria(studente):
+def fetch_promemoria(studente, giorni=0):
     """Estrae promemoria dalla dashboard"""
-    dashboard = fetch_dashboard(studente)
+    dashboard = fetch_dashboard(studente, giorni)
     if not dashboard:
         return []
     try:

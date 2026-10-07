@@ -70,6 +70,11 @@ def init_db():
         creato_il TEXT DEFAULT (datetime('now','localtime'))
     )''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS meta (
+        chiave TEXT PRIMARY KEY, valore TEXT,
+        aggiornato_il TEXT DEFAULT (datetime('now','localtime'))
+    )''')
+
     c.execute('''CREATE TABLE IF NOT EXISTS lezioni_registro (
         studente TEXT NOT NULL DEFAULT 'default',
         data TEXT NOT NULL, ora INTEGER NOT NULL,

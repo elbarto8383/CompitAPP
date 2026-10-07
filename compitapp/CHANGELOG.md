@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.11
+
+- **Voti, assenze e comunicazioni di bacheca ora si caricano anche se precedenti all'installazione**: la richiesta ad Argo restituiva solo le novità di "oggi", quindi un voto o un'assenza compariva soltanto se inserito dopo l'avvio dell'app. Per questo molti vedevano sempre "N/D" e "0" nei sensori. Ora al primo avvio viene letto tutto l'anno scolastico e poi gli ultimi 7 giorni.
+- **Nessuna notifica per lo storico**: il primo caricamento è silenzioso, quindi Telegram non viene riempito di voti e assenze vecchi. Le notifiche partono solo per le novità successive.
+- **Sensori di Home Assistant aggiornati a fine sincronizzazione** (prima venivano aggiornati solo dopo i compiti, e non se quel giorno non c'erano compiti): ultimo voto, media, assenze e bacheca ora riflettono i dati più recenti.
+- Il sensore "avvisi in bacheca" conta le comunicazioni degli ultimi 30 giorni.
+- Letture da Argo più leggere: i dati ricevuti vengono riutilizzati per qualche secondo durante lo stesso ciclo.
+- Nuova tabella `meta` nel database, creata in automatico (nessuna azione richiesta).
+
 ## 1.0.10
 
 - Il recupero dello storico del registro parte subito (al primo controllo dopo l'avvio) invece di attendere fino a un'ora, e si ripete a ogni controllo finché l'archivio delle lezioni non ha almeno 10 giorni.
