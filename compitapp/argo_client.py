@@ -1,7 +1,10 @@
 import os
 import json
 import time
+import secrets
+import requests
 from argofamiglia import ArgoFamiglia
+from argofamiglia.CONSTANTS import ENDPOINT
 
 def get_studenti():
     raw = os.environ.get('STUDENTI', '[]')
@@ -14,6 +17,57 @@ def get_studenti():
 
 _sessions = {}
 
+
+def _descrivi_profilo(p):
+    """Testo breve per i registri (senza token)."""
+    parti = []
+    for k, v in p.items():
+        if k == 'token' or v in (None, ''):
+            continue
+        if isinstance(v, (str, int)) and len(str(v)) < 60:
+            parti.append(f"{k}={v}")
+        elif isinstance(v, dict):
+            for k2, v2 in v.items():
+                if isinstance(v2, (str, int)) and len(str(v2)) < 60 and v2 not in (None, ''):
+                    parti.append(f"{k}.{k2}={v2}")
+    return ", ".join(parti[:12])
+
+
+def _scegli_profilo(session, studente):
+    """Un account Argo con più figli ha più "profili" (la schermata «Scelta profilo» dell'app DiDUP).
+    La libreria usa sempre il primo: qui si sceglie quello indicato dal campo `alunno` (1, 2...)."""
+    nome = studente.get('nome', 'default')
+    try:
+        indice = int(studente.get('alunno') or 0)
+    except (TypeError, ValueError):
+        indice = 0
+    try:
+        login_data = session._ArgoFamiglia__login_data
+        r = requests.post(ENDPOINT + "login", timeout=30, headers={
+            "Content-Type": "Application/json", "Accept": "Application/json",
+            "Authorization": "Bearer " + login_data["access_token"]},
+            json={"clientID": secrets.token_urlsafe(64), "lista-x-auth-token": "[]",
+                  "x-auth-token-corrente": "null", "lista-opzioni-notifiche": "{}"})
+        profili = r.json().get('data') or []
+    except Exception as e:
+        print(f"[ARGO] {nome}: elenco profili non disponibile ({e})")
+        return
+    if len(profili) > 1:
+        print(f"[ARGO] {nome}: l'account Argo contiene {len(profili)} profili"
+              + ("" if indice else " — compila il campo 'alunno' (1, 2...) per ogni figlio, altrimenti usa sempre il primo"))
+        for i, p in enumerate(profili, 1):
+            print(f"[ARGO]   profilo {i}: {_descrivi_profilo(p)}")
+    if not indice or not profili:
+        return
+    if indice > len(profili):
+        print(f"[ARGO] {nome}: alunno={indice} ma l'account ha {len(profili)} profili, uso l'ultimo")
+        indice = len(profili)
+    token = profili[indice - 1].get('token')
+    if token:
+        session._ArgoFamiglia__token = token
+        session._ArgoFamiglia__headers["x-auth-token"] = token
+        print(f"[ARGO] {nome}: uso il profilo {indice} di {len(profili)}")
+
 def get_session(studente):
     nome = studente.get('nome', 'default')
     global _sessions
@@ -24,6 +78,7 @@ def get_session(studente):
                 studente['username'],
                 studente['password']
             )
+            _scegli_profilo(_sessions[nome], studente)
             print(f"[ARGO] ✅ Sessione creata per {nome}")
         return _sessions[nome]
     except Exception as e:
@@ -47,7 +102,9 @@ def _filtra_alunno(studente, data):
     except AttributeError:
         return data
     nome = studente.get('nome', 'default')
-    if len(dati) > 1 and nome not in _sezioni_loggate:
+    if len(dati) <= 1:
+        return data
+    if nome not in _sezioni_loggate:
         _sezioni_loggate.add(nome)
         print(f"[ARGO] {nome}: l'account Argo contiene {len(dati)} alunni"
               + ("" if studente.get('alunno') else " — compila il campo 'alunno' (1, 2...) per ogni figlio, altrimenti i dati si mescolano"))

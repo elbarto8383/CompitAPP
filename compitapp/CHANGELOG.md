@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2
+
+- Più figli con lo stesso accesso DiDUP (quello in cui, dopo il login, compare la schermata «Scelta profilo»): il campo `alunno` ora sceglie davvero il profilo. Prima l'app usava sempre il primo profilo, quindi entrambi i figli mostravano gli stessi dati. Nei registri, all'avvio, compare l'elenco dei profili trovati (`profilo 1: …`, `profilo 2: …`) e quale viene usato.
+
 ## 2.0.1
 
 - Card: il popup ora si apre al centro dello schermo anche con i temi «a vetro» (prima restava tagliato dentro la card). Si chiude toccando fuori, con la X o con Esc.

@@ -256,7 +256,7 @@ studenti:
 
 Con più figli aggiungi una voce per ciascuno, ognuno con il proprio `chat_id`: ogni ragazzo riceve solo le sue notifiche.
 
-**Due figli con lo stesso account DiDUP?** Se la scuola ti ha dato un solo accesso che mostra entrambi i figli, crea due voci con le stesse credenziali e nel campo `alunno` scrivi `1` per il primo figlio e `2` per il secondo (nello stesso ordine in cui li vedi nell'app DiDUP). Senza questo campo i dati dei due figli si mescolerebbero. Se i due risultano scambiati, inverti i numeri.
+**Due figli con lo stesso account DiDUP?** Se dopo il login in DiDUP compare la schermata «Scelta profilo» (un solo accesso, più figli), crea due voci con le stesse credenziali e nel campo `alunno` scrivi `1` per il primo figlio e `2` per il secondo (nello stesso ordine della schermata «Scelta profilo»; nei registri dell'app, all'avvio, trovi l'elenco dei profili e quale viene usato). Senza questo campo i dati dei due figli si mescolerebbero. Se i due risultano scambiati, inverti i numeri.
 
 ```yaml
 studenti:
