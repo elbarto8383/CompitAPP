@@ -351,6 +351,15 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 
 ---
 
+## 🙏 Ringraziamenti
+
+CompitAPP cresce grazie a chi lo prova e segnala problemi:
+
+- [@CGCM2025](https://github.com/CGCM2025): ha individuato come Argo calcola le medie (esclusi i voti «non fa media») e ha scritto la correzione inclusa nella versione 2.0.3, così la media in CompitAPP coincide con quella di DiDUP.
+- Chi ha provato l'app con più figli e con account diversi, e ha condiviso i dettagli dei propri registri: senza di voi non avrei potuto sistemare questi casi.
+
+---
+
 ## 🛠️ Supporto e contributi
 
 Bug e richieste: [Issue su GitHub](https://github.com/elbarto8383/CompitAPP/issues). I contributi sono benvenuti con una pull request. Prima di aprire una issue **togli** da log e schermate username, password, token e Chat ID.
