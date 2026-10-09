@@ -3,7 +3,7 @@ import os
 import json
 from flask import Flask, render_template, jsonify, request
 from datetime import date, timedelta
-from models import init_db, get_db
+from models import init_db, get_db, media_argo
 from argo_client import get_studenti
 from orario_utils import GIORNI, anno_scolastico, stile_materia, etichetta_breve
 
@@ -32,7 +32,7 @@ def _media(voti):
             valori.append(float(str(v['voto']).replace(',','.')))
         except Exception:
             pass
-    return round(sum(valori)/len(valori), 1) if valori else None
+    return round(sum(valori)/len(valori), 2) if valori else None
 
 @app.route('/healthz')
 @app.route('/health')
@@ -71,13 +71,16 @@ def index():
     bacheca        = conn.execute('SELECT * FROM bacheca WHERE studente=? ORDER BY data DESC LIMIT 3', (sel,)).fetchall()
     promemoria     = conn.execute('SELECT * FROM promemoria WHERE studente=? AND data>=? ORDER BY data', (sel, oggi)).fetchall()
     assenze_tot    = conn.execute("SELECT COUNT(*) as n FROM assenze WHERE studente=? AND tipo='A'", (sel,)).fetchone()['n']
+    ma             = media_argo(conn, sel)
     conn.close()
+    tutti_voti     = [v for v in tutti_voti if str(v['voto']).strip() not in ('0', '0.0', '0,0', 'N', '')]
+    media          = ma['generale'] if ma and ma['generale'] is not None else _media(tutti_voti)
     return render_template('index.html',
         studenti=studenti, studente_sel=sel,
         compiti_oggi=compiti_oggi, compiti_domani=compiti_domani,
         prossimi=prossimi, ultimi_voti=ultimi_voti,
         bacheca=bacheca, promemoria=promemoria, assenze_mese=assenze_tot,
-        media=_media(tutti_voti), oggi=oggi, domani=domani,
+        media=media, oggi=oggi, domani=domani,
         soglia_voto=float(os.environ.get('SOGLIA_VOTO', 7))
     )
 
@@ -99,6 +102,7 @@ def voti():
     sel = _sel(studenti)
     conn = get_db()
     tutti_voti = conn.execute('SELECT * FROM voti WHERE studente=? ORDER BY data DESC', (sel,)).fetchall()
+    ma = media_argo(conn, sel)
     conn.close()
     medie = {}
     per_materia = {}
@@ -108,7 +112,9 @@ def voti():
         except Exception:
             pass
     for m, vals in per_materia.items():
-        medie[m] = round(sum(vals)/len(vals), 1)
+        medie[m] = round(sum(vals)/len(vals), 2)
+    if ma and ma['materie']:
+        medie = dict(ma['materie'])
     return render_template('voti.html', voti=tutti_voti, medie=medie,
         soglia=float(os.environ.get('SOGLIA_VOTO', 7)),
         studenti=studenti, studente_sel=sel)
@@ -262,6 +268,8 @@ def api_reset_db():
         conn = get_db()
         for tabella in ['compiti','voti','assenze','note_disciplinari','bacheca','argomenti','promemoria','orario','lezioni_registro']:
             conn.execute(f'DELETE FROM {tabella}')
+        # senza questo, dopo lo svuotamento l'app rileggeva solo gli ultimi 7 giorni
+        conn.execute("DELETE FROM meta WHERE chiave LIKE 'storico:%' OR chiave LIKE 'media_argo:%'")
         conn.commit()
         conn.close()
         return jsonify({'ok': True})

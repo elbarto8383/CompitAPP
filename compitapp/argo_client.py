@@ -57,6 +57,7 @@ def _scegli_profilo(session, studente):
               + ("" if indice else " — compila il campo 'alunno' (1, 2...) per ogni figlio, altrimenti usa sempre il primo"))
         for i, p in enumerate(profili, 1):
             print(f"[ARGO]   profilo {i}: {_descrivi_profilo(p)}")
+    _controlla_cambio_profilo(nome, indice if len(profili) > 1 else 0)
     if not indice or not profili:
         return
     if indice > len(profili):
@@ -67,6 +68,26 @@ def _scegli_profilo(session, studente):
         session._ArgoFamiglia__token = token
         session._ArgoFamiglia__headers["x-auth-token"] = token
         print(f"[ARGO] {nome}: uso il profilo {indice} di {len(profili)}")
+
+def _controlla_cambio_profilo(nome, indice):
+    """Se il profilo scelto (campo `alunno`) è cambiato dall'ultima volta, i dati salvati
+    appartengono a un altro alunno: si cancellano e lo storico viene ricaricato."""
+    try:
+        from models import get_db, svuota_studente
+        conn = get_db()
+        r = conn.execute('SELECT valore FROM meta WHERE chiave=?', (f"profilo:{nome}",)).fetchone()
+        precedente = r['valore'] if r else None
+        attuale = str(indice or 0)
+        if precedente is not None and precedente != attuale:
+            svuota_studente(conn, nome)
+            print(f"[ARGO] {nome}: il profilo è cambiato ({precedente} → {attuale}), "
+                  "cancello i dati vecchi e ricarico l'anno scolastico")
+        conn.execute("INSERT OR REPLACE INTO meta (chiave, valore) VALUES (?, ?)", (f"profilo:{nome}", attuale))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[ARGO] {nome}: controllo cambio profilo non riuscito ({e})")
+
 
 def get_session(studente):
     nome = studente.get('nome', 'default')
@@ -409,3 +430,50 @@ def fetch_promemoria(studente, giorni=0):
     except Exception as e:
         print(f"[ARGO] Errore parsing promemoria: {e}")
         return []
+
+
+_voti_campi_loggati = set()
+
+
+def _log_campi_voto(nome, sezione):
+    """Una volta per studente stampa i campi di un voto come arrivano da Argo (aiuta a capire
+    come Argo segna i voti «non fa media»). Niente credenziali o token."""
+    if nome in _voti_campi_loggati:
+        return
+    voti = list(sezione.get('voti', []) or [])
+    if not voti:
+        return
+    _voti_campi_loggati.add(nome)
+    for v in voti[:2]:
+        parti = [f"{k}={v[k]}" for k in sorted(v) if not isinstance(v[k], (dict, list)) and len(str(v[k])) < 80]
+        print(f"[ARGO] Campi di un voto ({nome}): " + ", ".join(parti))
+
+
+def fetch_medie(studente, giorni=0):
+    """Medie calcolate dal portale Argo (le stesse dell'app DiDUP, senza i voti «non fa media»):
+    mediaGenerale e mediaMaterie, con listaMaterie per i nomi. None se Argo non le manda."""
+    nome = studente.get('nome', 'default')
+    dashboard = fetch_dashboard(studente, giorni)
+    if not dashboard:
+        return None
+    try:
+        for sezione in dashboard.get('data', {}).get('dati', []):
+            _log_campi_voto(nome, sezione)
+            nomi = {}
+            for m in sezione.get('listaMaterie') or []:
+                if isinstance(m, dict):
+                    nomi[str(m.get('pk'))] = m.get('materia') or m.get('desMateria') or m.get('descrizione')
+            materie = {}
+            mm = sezione.get('mediaMaterie') or {}
+            righe = mm.items() if isinstance(mm, dict) else ((str(x.get('pk')), x) for x in mm if isinstance(x, dict))
+            for pk, m in righe:
+                if isinstance(m, dict) and m.get('mediaMateria') not in (None, '', 0, '0'):
+                    materie[nomi.get(str(pk)) or str(pk)] = m.get('mediaMateria')
+            generale = sezione.get('mediaGenerale')
+            print(f"[ARGO] Medie Argo {nome}: generale={generale}, materie={materie}")
+            if generale in (None, '') and not materie:
+                return None
+            return {'generale': generale, 'materie': materie}
+    except Exception as e:
+        print(f"[ARGO] Errore lettura medie {nome}: {e}")
+    return None

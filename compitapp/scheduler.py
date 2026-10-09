@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import date, datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -6,8 +7,8 @@ import pytz
 
 from argo_client import (get_studenti, fetch_dashboard, fetch_compiti, fetch_voti, fetch_assenze,
                          fetch_note, fetch_bacheca, fetch_argomenti, fetch_promemoria,
-                         fetch_orario, fetch_registro)
-from models import get_db
+                         fetch_orario, fetch_registro, fetch_medie)
+from models import get_db, media_argo
 from notifier import (notifica_nuovi_compiti, notifica_nuovo_voto, notifica_assenza,
                       notifica_nota, notifica_bacheca, notifica_promemoria,
                       reminder_compiti_domani, sync_sensori_ha)
@@ -114,6 +115,10 @@ def sync_voti():
             if silenzioso:
                 _storico_fatto(conn, 'voti', nome)
                 print(f"[SCHEDULER] Voti {nome}: caricato lo storico ({nuovi} voti), senza notifiche")
+            medie = fetch_medie(studente, giorni)
+            if medie:
+                conn.execute("INSERT OR REPLACE INTO meta (chiave, valore) VALUES (?, ?)",
+                             (f"media_argo:{nome}", json.dumps(medie)))
             conn.commit()
             conn.close()
         except Exception as e:
@@ -401,7 +406,7 @@ def _dettagli_sensori(conn, nome, oggi, domani):
             per_materia.setdefault(r['materia'], []).append(float(str(r['voto']).replace(',', '.')))
         except Exception:
             pass
-    medie = sorted(({'materia': m, 'media': round(sum(v) / len(v), 1), 'n': len(v)} for m, v in per_materia.items()),
+    medie = sorted(({'materia': m, 'media': round(sum(v) / len(v), 2), 'n': len(v)} for m, v in per_materia.items()),
                    key=lambda x: x['materia'])
     assenze = [{'data': r['data'], 'tipo': r['tipo'], 'descrizione': _taglia(r['descrizione'], 150),
                 'giustificata': bool(r['giustificata'])} for r in conn.execute(
@@ -425,6 +430,7 @@ def _aggiorna_sensori(nome):
         ultimo_voto = conn.execute("SELECT voto, materia FROM voti WHERE studente=? AND voto NOT IN ('0','0.0','0,0','N','') ORDER BY data DESC, id DESC LIMIT 1", (nome,)).fetchone()
         tutti_voti = conn.execute("SELECT voto FROM voti WHERE studente=? AND voto NOT IN ('0','0.0','0,0','N','')", (nome,)).fetchall()
         dettagli = _dettagli_sensori(conn, nome, oggi, domani)
+        ma = media_argo(conn, nome)
         conn.close()
         valori = []
         for v in tutti_voti:
@@ -432,7 +438,13 @@ def _aggiorna_sensori(nome):
                 valori.append(float(str(v['voto']).replace(',','.')))
             except Exception:
                 pass
-        media = round(sum(valori)/len(valori), 1) if valori else 'N/D'
+        media = round(sum(valori)/len(valori), 2) if valori else 'N/D'
+        if ma and ma['generale'] is not None:
+            media = ma['generale']
+        if ma and ma['materie']:
+            conteggi = {m['materia']: m['n'] for m in dettagli.get('medie', [])}
+            dettagli['medie'] = sorted(({'materia': m, 'media': v, 'n': conteggi.get(m, 0)}
+                                        for m, v in ma['materie'].items()), key=lambda x: x['materia'])
         sync_sensori_ha(nome, {
             'compiti_oggi': n_oggi, 'compiti_domani': n_domani,
             'assenze_totali': n_assenze, 'bacheca_non_lette': n_bacheca,

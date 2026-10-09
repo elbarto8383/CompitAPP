@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.3
+
+- **Media dei voti uguale a quella di DiDUP.** L'app ora usa le medie calcolate da Argo (generale e per materia), che escludono i voti «non fa media», invece di calcolarle da sola. Se Argo non le manda, si usa il calcolo di prima. Le medie mostrano due decimali (es. 8,15). Contributo di un utente del gruppo, grazie!
+- Cambiando il campo `alunno` di uno studente, i dati salvati del profilo precedente vengono cancellati e l'anno scolastico viene riletto da capo senza notifiche (prima restavano i dati dell'altro bambino).
+- Il pulsante di azzeramento del database ora azzera anche i segni di «storico già caricato», quindi dopo lo svuotamento viene riletto tutto l'anno e non solo gli ultimi 7 giorni.
+- Nei registri, una volta per studente, compaiono i campi di un voto come arrivano da Argo: aiuta a capire come vengono segnati i voti «non fa media».
+
 ## 2.0.2
 
 - Più figli con lo stesso accesso DiDUP (quello in cui, dopo il login, compare la schermata «Scelta profilo»): il campo `alunno` ora sceglie davvero il profilo. Prima l'app usava sempre il primo profilo, quindi entrambi i figli mostravano gli stessi dati. Nei registri, all'avvio, compare l'elenco dei profili trovati (`profilo 1: …`, `profilo 2: …`) e quale viene usato.
