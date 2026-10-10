@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.4
+
+- Più figli con lo stesso accesso: se per un figlio (alunno 2, 3…) l'app aveva già salvato dati prima di conoscere il profilo giusto, quei dati erano del primo figlio e restavano a video anche dopo aver impostato `alunno`. Al primo avvio con questa versione vengono cancellati e riletti da capo, senza notifiche.
+
 ## 2.0.3
 
 - **Media dei voti uguale a quella di DiDUP.** L'app ora usa le medie calcolate da Argo (generale e per materia), che escludono i voti «non fa media», invece di calcolarle da sola. Se Argo non le manda, si usa il calcolo di prima. Le medie mostrano due decimali (es. 8,15). Contributo di [@CGCM2025](https://github.com/CGCM2025), grazie!

@@ -78,9 +78,12 @@ def _controlla_cambio_profilo(nome, indice):
         r = conn.execute('SELECT valore FROM meta WHERE chiave=?', (f"profilo:{nome}",)).fetchone()
         precedente = r['valore'] if r else None
         attuale = str(indice or 0)
-        if precedente is not None and precedente != attuale:
+        # Prima volta che registriamo il profilo (aggiornamento da una versione precedente): i dati
+        # già salvati sono quelli del PRIMO profilo, quindi per un alunno 2, 3... non sono suoi.
+        primo_controllo_su_altro_profilo = precedente is None and attuale not in ('0', '1')
+        if (precedente is not None and precedente != attuale) or primo_controllo_su_altro_profilo:
             svuota_studente(conn, nome)
-            print(f"[ARGO] {nome}: il profilo è cambiato ({precedente} → {attuale}), "
+            print(f"[ARGO] {nome}: profilo {precedente if precedente is not None else 'precedente sconosciuto'} → {attuale}, "
                   "cancello i dati vecchi e ricarico l'anno scolastico")
         conn.execute("INSERT OR REPLACE INTO meta (chiave, valore) VALUES (?, ?)", (f"profilo:{nome}", attuale))
         conn.commit()
