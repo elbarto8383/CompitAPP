@@ -205,7 +205,7 @@ def configurazione():
     cred = next((s for s in studenti if s['nome'] == sel), {})
     
     cfg = {
-        'connesso': len(studenti) > 0 and bool(cred.get('codice_scuola')),
+        'connesso': len(studenti) > 0 and bool(cred.get('username') and (cred.get('codice_scuola') or str(cred.get('registro')).lower() == 'nuvola')),
         'username': cred.get('username',''),
         'codice_scuola': cred.get('codice_scuola',''),
         'genitore1_nome': os.environ.get('GENITORE1_NOME', 'Genitore 1'),

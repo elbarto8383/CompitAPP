@@ -46,23 +46,29 @@ configuration:
     description: "Campo mantenuto solo per compatibilità: l'anno scolastico ora è calcolato in automatico. Puoi ignorarlo."
   studenti:
     name: Studenti (uno per ogni figlio)
-    description: "Aggiungi una voce per ogni figlio con le credenziali del registro Argo DiDUP."
+    description: "Aggiungi una voce per ogni figlio con le credenziali del registro (Argo DiDUP o Nuvola Madisoft)."
     fields:
       nome:
         name: Nome e cognome dello studente
         description: "Come lo vuoi vedere nelle notifiche e nella pagina web (es. Luca Rossi)."
+      registro:
+        name: Tipo di registro
+        description: "Seleziona 'argo' per Argo DiDUP/ScuolaNext oppure 'nuvola' per Nuvola Madisoft. Predefinito: argo."
       codice_scuola:
-        name: Codice scuola
-        description: "Il codice della scuola su DiDUP (formato SC12345). Lo trovi nel profilo dell'app DiDUP o in segreteria."
+        name: Codice scuola (solo Argo)
+        description: "Obbligatorio per Argo DiDUP (formato SC12345). Per Nuvola lascia vuoto."
       username:
-        name: Username DiDUP
-        description: "Il nome utente con cui accedi al registro DiDUP."
+        name: Username registro
+        description: "Il nome utente con cui accedi al registro elettronico (Argo o Nuvola)."
       password:
-        name: Password DiDUP
-        description: "La password del registro DiDUP. Resta salvata nel tuo Home Assistant."
+        name: Password registro
+        description: "La password del registro elettronico. Resta salvata nel tuo Home Assistant."
       alunno:
         name: Numero alunno (solo se un account ha più figli)
-        description: "Se con lo stesso account DiDUP vedi più figli, scrivi 1 per il primo, 2 per il secondo (stesso ordine dell'app DiDUP). Lascia vuoto se l'account ha un solo figlio."
+        description: "Se con lo stesso account vedi più figli, scrivi 1 per il primo, 2 per il secondo. Lascia vuoto se l'account ha un solo figlio."
+      alunno_id:
+        name: ID univoco alunno (facoltativo, solo Nuvola)
+        description: "Identificativo numerico dello studente su Nuvola se si desidera specificarlo direttamente."
       chat_id:
         name: Chat ID Telegram dello studente (facoltativo)
         description: "Se lo compili, il ragazzo riceve su Telegram compiti, riepilogo serale, bacheca e promemoria, MAI voti, assenze o note. Lascia vuoto se non serve."

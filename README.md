@@ -4,7 +4,7 @@
 
 <img src="compitapp/logo.png" width="128" alt="CompitAPP Logo">
 
-**Compiti, voti e comunicazioni del registro scolastico DiDUP/Argo ScuolaNext,**
+**Compiti, voti e comunicazioni dei registri scolastici Argo (DiDUP/ScuolaNext) e Nuvola (Madisoft),**
 **direttamente su Telegram e in una comoda pagina web — dentro il tuo Home Assistant.**
 
 [![Aggiungi a Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Felbarto8383%2FCompitAPP)
@@ -21,7 +21,7 @@
 
 > ℹ️ In Home Assistant gli *add-on* si chiamano ora **«app»**: in questo documento i due termini indicano la stessa cosa.
 
-> ⚠️ **Progetto non ufficiale.** CompitAPP non è affiliato né approvato da Argo Software S.r.l. Argo, DidUP e ScuolaNext sono marchi dei rispettivi proprietari. Leggi la sezione [Avvertenze](#️-avvertenze-importanti) prima di usarlo.
+> **Progetto non ufficiale.** CompitAPP non è affiliato né approvato da Argo Software S.r.l. né da Madisoft S.p.A. Argo, DidUP, ScuolaNext e Nuvola sono marchi dei rispettivi proprietari. Leggi la sezione [Avvertenze](#avvertenze-importanti) prima di usarlo.
 
 ---
 
@@ -44,9 +44,10 @@ Essendo dentro Home Assistant, i dati diventano anche **sensori** (compiti di og
 - 📱 **Pagina web** per compiti, calendario, voti, orario, bacheca, assenze e lezioni, dentro Home Assistant e usabile anche da telefono
 - 🤖 **Bot Telegram** con comandi e **notifiche automatiche** (compiti, voti, assenze, bacheca, note)
 - 🌙 **Riepilogo serale** intelligente e personalizzabile
-- 👨‍👩‍👧‍👦 **Più figli**, anche con lo stesso account DiDUP, ognuno con le sue notifiche
+- **Più figli**, anche con lo stesso account o su registri diversi (Argo / Nuvola), ognuno con le sue notifiche
 - 🏠 **Sensori** per automazioni e dashboard
 - 🃏 **Card per la dashboard** con popup di dettaglio (novità 2.0)
+- **Supporto multi-registro**: connettori nativi per Argo (DiDUP/ScuolaNext) e Nuvola (Madisoft S.p.A.)
 
 ### 📱 Pagina web (PWA) — usabile da browser, iPhone e Android
 
@@ -243,33 +244,74 @@ reminder_testo_vuoto: ""          # frase tua per "nessun compito" (vuoto = pred
 reminder_testo_chiusura: ""       # frase tua a fine messaggio (vuoto = predefinita)
 polling_intervallo_minuti: 30     # ogni quanto controlla il registro
 
-# Studenti (uno o più figli)
+# Studenti (uno o più figli, registro Argo o Nuvola)
 studenti:
+  # Esempio 1: Studente con registro Argo (DiDUP)
   - nome: "Luca Rossi"
-    codice_scuola: "SC12345"      # codice scuola (dalla segreteria o dall'app DiDUP)
+    registro: argo                # opzionale: "argo" (predefinito) o "nuvola"
+    codice_scuola: "SC12345"      # codice scuola (obbligatorio solo per Argo)
     username: "l.rossi"           # username DiDUP
     password: "la_tua_password"
-    alunno:                       # SOLO se un account DiDUP ha più figli (vedi sotto)
-    chat_id: ""                   # facoltativo: Chat ID Telegram di questo ragazzo/a
+    alunno:                       # opzionale: 1, 2... se account genitore multi-profilo
+    chat_id: ""                   # facoltativo: Chat ID Telegram dello studente
                                   # (riceve compiti, riepilogo, bacheca e promemoria; mai i voti)
+
+  # Esempio 2: Studente con registro Nuvola (Madisoft)
+  - nome: "Marco Bianchi"
+    registro: nuvola              # connettore Nuvola
+    username: "m.bianchi"         # username Nuvola
+    password: "la_tua_password"   # password Nuvola (nessun codice scuola, no SPID)
+    alunno:                       # opzionale: 1, 2... se account genitore multi-figlio
+    alunno_id:                    # facoltativo: ID numerico univoco alunno su Nuvola
+    chat_id: ""                   # facoltativo: Chat ID Telegram dello studente
 ```
+
+### Parametri per ciascuno studente
+
+| Parametro | Descrizione | Registro | Obbligatorio |
+|---|---|---|---|
+| `nome` | Nome dello studente visualizzato nell'interfaccia e nei sensori | Argo / Nuvola | Sì |
+| `registro` | Tipo di registro: `argo` oppure `nuvola` (predefinito: `argo`) | Argo / Nuvola | No |
+| `codice_scuola` | Codice scuola (dalla segreteria o dall'app DiDUP) | Solo Argo | Sì (per Argo) |
+| `username` | Nome utente di accesso al registro | Argo / Nuvola | Sì |
+| `password` | Password di accesso al registro | Argo / Nuvola | Sì |
+| `alunno` | Indice profilo (`1` primo figlio, `2` secondo...) per account con più figli | Argo / Nuvola | No |
+| `alunno_id` | Identificativo numerico univoco dello studente (ID Nuvola) | Solo Nuvola | No |
+| `chat_id` | Chat ID Telegram specifico dello studente per compiti e promemoria | Argo / Nuvola | No |
 
 Con più figli aggiungi una voce per ciascuno, ognuno con il proprio `chat_id`: ogni ragazzo riceve solo le sue notifiche.
 
-**Due figli con lo stesso account DiDUP?** Se dopo il login in DiDUP compare la schermata «Scelta profilo» (un solo accesso, più figli), crea due voci con le stesse credenziali e nel campo `alunno` scrivi `1` per il primo figlio e `2` per il secondo (nello stesso ordine della schermata «Scelta profilo»; nei registri dell'app, all'avvio, trovi l'elenco dei profili e quale viene usato). Senza questo campo i dati dei due figli si mescolerebbero. Se i due risultano scambiati, inverti i numeri.
+**Più figli con lo stesso account genitore?**
+- Con **Argo**, se dopo il login compare la schermata «Scelta profilo», crea due voci con le stesse credenziali e nel campo `alunno` imposta `1` per il primo figlio e `2` per il secondo (nello stesso ordine della schermata DiDUP).
+- Con **Nuvola**, se l'account del tutore gestisce più studenti, imposta similmente `alunno: 1` e `alunno: 2` (oppure `alunno_id: 123456`) per associare ciascuna scheda al rispettivo studente.
 
 ```yaml
+# Esempio con due figli su Nuvola con lo stesso account genitore
 studenti:
-  - nome: "Giorgia"
-    codice_scuola: "SC12345"
-    username: "famiglia.rossi"
+  - nome: "Elena"
+    registro: nuvola
+    username: "famiglia.bianchi"
     password: "la_tua_password"
     alunno: 1
-  - nome: "Luca"
-    codice_scuola: "SC12345"
-    username: "famiglia.rossi"
+  - nome: "Marco"
+    registro: nuvola
+    username: "famiglia.bianchi"
     password: "la_tua_password"
     alunno: 2
+```
+
+```yaml
+# Esempio misto con registri diversi (un figlio su Argo e uno su Nuvola)
+studenti:
+  - nome: "Giorgia"
+    registro: argo
+    codice_scuola: "SC12345"
+    username: "famiglia.rossi"
+    password: "password_argo"
+  - nome: "Luca"
+    registro: nuvola
+    username: "famiglia.rossi"
+    password: "password_nuvola"
 ```
 
 > Il campo `anno_scolastico` presente nella configurazione non viene più usato: l'anno è calcolato in automatico.
@@ -279,8 +321,8 @@ studenti:
 2. Scrivigli `/start`
 3. Risponde con il tuo **Chat ID**: copialo nel campo corrispondente
 
-### Come trovare il codice scuola
-Si trova nella schermata del profilo dell'app DiDUP (formato `SC12345`) o chiedendolo alla segreteria.
+### Come trovare il codice scuola (solo Argo)
+Si trova nella schermata del profilo dell'app DiDUP (formato `SC12345`) o chiedendolo alla segreteria. Per Nuvola il codice scuola non è necessario.
 
 ---
 
@@ -297,8 +339,8 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 ## 🔒 Sicurezza e privacy — cosa succede ai tuoi dati
 
 - **Dove vengono salvati**: compiti, voti e assenze sono scaricati e archiviati **solo nel database locale del tuo Home Assistant**. L'autore del progetto non ha alcun server e non riceve nessun dato.
-- **Cosa esce dalla tua rete**: il programma dialoga con i server di **Argo** (per leggere il registro) e di **Telegram** (per inviarti le notifiche). Le notifiche contengono i dati scolastici dei ragazzi e passano quindi dai server di Telegram: valuta se ti va bene prima di attivarle.
-- **Credenziali**: username e password DiDUP restano nella configurazione di Home Assistant (la password non è cifrata nel file di configurazione, come per tutte le opzioni degli add-on). Il token Telegram è oscurato nell'interfaccia. Proteggi l'accesso al tuo Home Assistant e ai suoi backup.
+- **Cosa esce dalla tua rete**: il programma dialoga con i server ufficiali di **Argo** (`argo.portaleargo.it`) o di **Nuvola** (`nuvola.madisoft.it`) a seconda del registro dello studente, e con i server di **Telegram** (per l'invio delle notifiche). Le notifiche contengono i dati scolastici dei ragazzi e passano quindi dai server di Telegram: valuta se ti va bene prima di attivarle.
+- **Credenziali**: username e password restano nella configurazione di Home Assistant (la password non è cifrata nel file di configurazione, come per tutte le opzioni degli add-on). Il token Telegram è oscurato nell'interfaccia. Proteggi l'accesso al tuo Home Assistant e ai suoi backup.
 - **Solo lettura**: CompitAPP usa solo chiamate di lettura verso il registro: non inserisce né modifica dati e non giustifica assenze.
 - **Accesso alla pagina**: passa dall'Ingress di Home Assistant (autenticazione di HA, nessuna porta esposta per l'interfaccia). La porta 5002 è comunque pubblicata sulla tua rete locale: non aprirla verso Internet.
 
@@ -306,11 +348,11 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 
 ## ⚠️ Avvertenze importanti
 
-- **Uso non ufficiale.** Per quanto ne sappiamo Argo non offre un'interfaccia pubblica e documentata per le famiglie: CompitAPP usa la stessa via di accesso dell'app ufficiale tramite una libreria della comunità ([argofamiglia](https://pypi.org/project/argofamiglia/)). Argo può modificarla in qualsiasi momento e **il programma potrebbe smettere di funzionare senza preavviso**.
-- **Condizioni d'uso.** Le credenziali sono personali: usa **solo le tue**, quelle che la scuola ti ha dato, e solo per il tuo account. Non sappiamo come Argo o la tua scuola considerino l'accesso da programmi di terze parti: leggi le condizioni che hai accettato al primo accesso e, nel dubbio, chiedi alla segreteria. **Lo usi a tua responsabilità.**
+- **Uso non ufficiale.** Argo Software S.r.l. e Madisoft S.p.A. non offrono un'interfaccia pubblica documentata per le famiglie di terze parti: CompitAPP interagisce con le medesime API adoperate dalle rispettive applicazioni ufficiali (usando [argofamiglia](https://pypi.org/project/argofamiglia/) per Argo e un client dedicato per Nuvola). I fornitori possono modificare tali endpoint in qualsiasi momento e il programma potrebbe richiedere adeguamenti.
+- **Condizioni d'uso.** Le credenziali sono personali: usa solo le tue, quelle che la scuola ti ha assegnato, e solo per il tuo account. Leggi le condizioni di utilizzo che hai accettato e, nel dubbio, chiedi alla segreteria. Lo usi a tua responsabilità.
 - **Dati di minori.** Il programma tratta dati scolastici dei tuoi figli, per uso personale e familiare. Non condividere schermate, token o credenziali in pubblico (nemmeno nelle issue).
 - **Nessuna garanzia.** Il software è fornito «così com'è», senza garanzie (vedi [LICENSE](LICENSE)). Non sostituisce le comunicazioni ufficiali della scuola: per scadenze e avvisi importanti controlla anche il registro.
-- **Una sola sessione.** Argo può consentire una sola sessione attiva per le stesse credenziali: se noti disconnessioni anomale dall'app dopo l'installazione, [apri una issue](https://github.com/elbarto8383/CompitAPP/issues) indicando cosa è successo.
+- **Sessioni e accessi.** Alcuni registri potrebbero gestire limitazioni sulle sessioni concorrenti per le medesime credenziali: in caso di anomalie di disconnessione, verifica i registri dell'add-on.
 
 ---
 
@@ -326,10 +368,10 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 → Viene ricostruito dalle lezioni registrate dai docenti: servono alcuni giorni di scuola già annotati sul registro. Se un'ora manca, probabilmente il docente non l'ha ancora registrata.
 
 **Posso usarlo con più figli?**
-→ Sì: aggiungi più voci in `studenti`. Ognuno ha sensori e notifiche propri. Se i figli hanno lo stesso account DiDUP usa il campo `alunno` (1, 2…): vedi [Configurazione](#️-configurazione).
+→ Sì: aggiungi più voci in `studenti`. Ognuno ha sensori e notifiche propri. Se i figli condividono lo stesso account genitore usa il campo `alunno` (1, 2…) oppure `alunno_id`: vedi [Configurazione](#configurazione).
 
 **Voti e media sono sempre «N/D», le assenze a 0**
-→ Alle elementari i voti spesso non si usano e le assenze si azzerano a fine anno: se il registro non li contiene, CompitAPP non può mostrarli. Nei registri dell'app compare quanti voti arrivano da Argo (`Voti Nome: N ricevuti da Argo`).
+→ Alle elementari i voti spesso non si usano e le assenze si azzerano a fine anno: se il registro non li contiene, CompitAPP non può mostrarli. Nei registri dell'app compare quanti voti arrivano dal registro (`Voti Nome: N ricevuti da Argo` o `Voti Nome: N ricevuti da Nuvola`).
 
 **La card non compare / dice «Custom element doesn't exist»**
 → Controlla di aver aggiunto la risorsa `/local/compitapp/compitapp-card.js` come *Modulo JavaScript*, di aver riavviato CompitAPP dopo l'aggiornamento e di aver ricaricato la pagina (Ctrl+F5, o svuota la cache dell'app su telefono).
@@ -338,7 +380,7 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 → Il nome in `students` deve essere quello scritto in CompitAPP (o il suo inizio, es. `Luigi` per `Luigi di Grazia`); se hai nomi simili usa `entity_slug: luigi_di_grazia` (la parte centrale del nome del sensore). Controlla in **Strumenti per sviluppatori → Stati** che esista `sensor.compitapp_<nome>_compiti_oggi`.
 
 **Funziona con altri registri (Nuvola, Axios, ClasseViva…)?**
-→ Per ora solo DiDUP/Argo: è l'unico che posso provare. L'idea di un sistema a «connettori» per altri registri è benvenuta: apri una issue o proponi una pull request.
+→ CompitAPP include il supporto nativo per **Argo (DiDUP/ScuolaNext)** e **Nuvola (Madisoft)** tramite connettori dedicati. Per ciascuno studente è possibile impostare `registro: argo` o `registro: nuvola`. Per Nuvola non serve il codice scuola e l'autenticazione a credenziali dirette funziona senza SPID. L'architettura è predisposta per accogliere ulteriori connettori in futuro (ad esempio Axios o ClasseViva).
 
 **Lo studente riceve i voti?**
 → No: con `studente_chat_id` riceve solo compiti, riepilogo, bacheca e promemoria.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.0
+
+- **Supporto multi-registro ed integrazione connettore Nuvola (Madisoft)**: introdotta un'architettura modulare a connettori per supportare molteplici registri elettronici. CompitAPP ora supporta nativamente sia Argo (DiDUP/ScuolaNext) sia Nuvola (Madisoft S.p.A.).
+- **Client Nuvola API nativo**: implementato client Python sincrono zero-dipendenze (`compitapp/nuvola_api`) per l'interazione diretta con le API REST di Nuvola (autenticazione JWT, gestione token e rinnovo automatico senza necessita' di SPID).
+- **Connettore Nuvola (`connectors/nuvola.py`)**: estrazione e normalizzazione completa di compiti, voti con relative medie per materia e generale, assenze, ritardi, uscite anticipate, note disciplinari, circolari e comunicazioni in bacheca, promemoria dei docenti ed argomenti di lezione nel formato unificato del database SQLite di CompitAPP.
+- **Configurazione flessibile dello studente**: aggiunto parametro opzionale `registro` (`argo` oppure `nuvola`, predefinito ad `argo`), reso opzionale il campo `codice_scuola` per account Nuvola e introdotto il supporto facoltativo al parametro `alunno_id`.
+- **Supporto per account multi-profilo Nuvola**: selezione automatica o mirata del profilo studente tramite indice `alunno` (1, 2...) o identificatore univoco `alunno_id`.
+- **Compatibilita' retroattiva garantita**: le installazioni esistenti basate su Argo rimangono perfettamente funzionanti senza richiedere modifiche alla configurazione preesistente.
+
 ## 2.0.5
 
 - Più figli con lo stesso accesso: pulizia una tantum dei dati del secondo figlio (e successivi). Chi aveva già usato una versione precedente con `alunno` 2 poteva avere nel database compiti, voti e lezioni del primo figlio mescolati a quelli giusti (compiti doppi, orario sbagliato) e nessuna versione li ripuliva. Al primo avvio con questa versione i dati vengono cancellati e riletti da capo; i compiti non ancora scaduti possono arrivare di nuovo una volta su Telegram.

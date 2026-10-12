@@ -1,7 +1,7 @@
 name: "CompitAPP"
-description: "Compiti e voti scolastici via DiDUP/Argo ScuolaNext — notifiche Telegram automatiche"
+description: "Compiti e voti scolastici via DiDUP/Argo ScuolaNext e Nuvola Madisoft — notifiche Telegram automatiche"
 url: "https://github.com/elbarto8383/CompitAPP"
-version: "2.0.5"
+version: "2.1.0"
 slug: compitapp
 init: false
 arch:
@@ -51,10 +51,12 @@ schema:
   anno_scolastico: str
   studenti:
     - nome: str
-      codice_scuola: str
+      registro: list(argo|nuvola)?
+      codice_scuola: str?
       username: str
       password: str
       alunno: int?
+      alunno_id: int?
       chat_id: str?
 
 ingress: true
