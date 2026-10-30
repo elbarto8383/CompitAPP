@@ -374,6 +374,7 @@ Per metterlo in una dashboard: **Aggiungi scheda → Pagina Web** con URL `/api/
 CompitAPP cresce grazie a chi lo prova e segnala problemi:
 
 - [@CGCM2025](https://github.com/CGCM2025): ha individuato come Argo calcola le medie (esclusi i voti «non fa media») e ha scritto la correzione inclusa nella versione 2.0.3, così la media in CompitAPP coincide con quella di DiDUP.
+- [@JackMorens](https://github.com/JackMorens): ha segnalato le notifiche dei promemoria ripetute ogni 30 minuti e ha individuato nel codice la causa (testi lunghi confrontati e salvati con lunghezze diverse); la correzione è nella versione 2.1.2.
 - [@Gianlu1107](https://github.com/Gianlu1107): ha proposto e scritto la riorganizzazione a «connettori» (`BaseConnector` e `ArgoConnector`) inclusa nella versione 2.1.1, che prepara il supporto ad altri registri elettronici oltre ad Argo.
 - Chi ha provato l'app con più figli e con account diversi, e ha condiviso i dettagli dei propri registri: senza di voi non avrei potuto sistemare questi casi.
 

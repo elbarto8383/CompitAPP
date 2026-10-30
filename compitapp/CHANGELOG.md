@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.2
+
+- **Corretti i promemoria (e altre voci) che arrivavano ripetuti su Telegram ogni 30 minuti.** Un promemoria, una nota o un argomento con un testo lungo (oltre 200 caratteri) non veniva riconosciuto come già salvato, quindi a ogni sincronizzazione ne nasceva una copia e, per promemoria e note, partiva una nuova notifica. Lo stesso valeva per compiti molto lunghi (oltre 500 caratteri). Ora il controllo usa lo stesso testo che viene salvato.
+- Al primo avvio con questa versione le copie già accumulate vengono cancellate (si tiene la più vecchia, quella già notificata): niente notifiche in più.
+- Grazie a @JackMorens per la segnalazione e per aver individuato la causa nel codice.
+
 ## 2.1.1
 
 - Riorganizzazione interna del codice: la parte che parla con Argo è ora un «connettore» separato, così in futuro si potranno aggiungere altri registri elettronici. Per te non cambia niente: accesso con password, accesso con SPID, più figli sullo stesso account, medie e pulizia dei dati funzionano come prima.
