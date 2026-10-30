@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.3
+
+- **Corretto il login con utente e password, che da fine ottobre non funzionava più** (nel registro compariva `Errore sessione ...: 'location'` e non arrivava più nessun dato). Argo ha aggiunto, alla fine dell'accesso, una pagina intermedia «Accesso completato ... Continua» al posto del reindirizzamento diretto, e la libreria usata finora non la sa seguire. CompitAPP ora fa il login da solo e segue anche quella pagina.
+- Se Argo rifiuta il login, nel registro compare un messaggio chiaro (credenziali rifiutate, pagina inattesa, ...) al posto di `'location'`, senza mai scrivere password, codici o token.
+- Non cambia niente nella configurazione: stessi campi, stesso accesso con SPID.
+
 ## 2.1.2
 
 - **Corretti i promemoria (e altre voci) che arrivavano ripetuti su Telegram ogni 30 minuti.** Un promemoria, una nota o un argomento con un testo lungo (oltre 200 caratteri) non veniva riconosciuto come già salvato, quindi a ogni sincronizzazione ne nasceva una copia e, per promemoria e note, partiva una nuova notifica. Lo stesso valeva per compiti molto lunghi (oltre 500 caratteri). Ora il controllo usa lo stesso testo che viene salvato.
