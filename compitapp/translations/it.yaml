@@ -2,6 +2,9 @@ configuration:
   telegram_token:
     name: Token del bot Telegram
     description: "Il token che ti dà @BotFather quando crei il bot (formato 123456:ABC-DEF...). Senza token non partono le notifiche."
+  telegram_ricezione:
+    name: Ricezione comandi Telegram
+    description: "polling (predefinito) = CompitAPP riceve direttamente dal bot dedicato. home_assistant = Home Assistant riceve dal bot condiviso e CompitAPP ascolta i suoi eventi; evita il conflitto getUpdates. Riavvia l’app dopo la modifica."
   genitore1_nome:
     name: Nome del genitore 1
     description: "Solo un'etichetta per riconoscerlo nella pagina Configurazione (es. Mario)."

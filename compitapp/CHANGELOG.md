@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0
+
+- **Bot Telegram condiviso con Home Assistant.** Se usi lo stesso bot anche con l'integrazione Telegram bot di Home Assistant in modalità Polling, i due ricevitori entravano in conflitto (`Conflict: terminated by other getUpdates request`) e i comandi smettevano di rispondere. Nuova opzione `telegram_ricezione`: lascia `polling` (predefinito, come prima) con un bot dedicato a CompitAPP, oppure scegli `home_assistant` e CompitAPP riceve `/voti`, `/orario` e `/resoconto` dagli eventi `telegram_command` di Home Assistant, senza fare `getUpdates`. In questa modalità i comandi sono accettati solo dalle chat dei genitori; le notifiche automatiche non cambiano. Dettagli nel README, sezione «Condividere il bot con Home Assistant».
+- Chi non cambia nulla nella configurazione non nota differenze.
+- Grazie a @kevinilcondor per la proposta e per il codice.
+
 ## 2.1.3
 
 - **Corretto il login con utente e password, che da fine ottobre non funzionava più** (nel registro compariva `Errore sessione ...: 'location'` e non arrivava più nessun dato). Argo ha aggiunto, alla fine dell'accesso, una pagina intermedia «Accesso completato ... Continua» al posto del reindirizzamento diretto, e la libreria usata finora non la sa seguire. CompitAPP ora fa il login da solo e segue anche quella pagina.

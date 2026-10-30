@@ -1,7 +1,7 @@
 name: "CompitAPP"
 description: "Compiti e voti scolastici via DiDUP/Argo ScuolaNext — notifiche Telegram automatiche"
 url: "https://github.com/elbarto8383/CompitAPP"
-version: "2.1.3"
+version: "2.2.0"
 slug: compitapp
 init: false
 arch:
@@ -15,6 +15,7 @@ auth_api: true
 
 options:
   telegram_token: ""
+  telegram_ricezione: polling
   genitore1_nome: "Genitore 1"
   genitore1_chat_id: ""
   genitore2_nome: "Genitore 2"
@@ -35,6 +36,7 @@ options:
 
 schema:
   telegram_token: password
+  telegram_ricezione: list(polling|home_assistant)
   genitore1_nome: str
   genitore1_chat_id: str
   genitore2_nome: str
