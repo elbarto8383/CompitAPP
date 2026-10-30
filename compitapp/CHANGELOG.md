@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.3.0
+
+- **Nuovo: supporto al registro Nuvola (Madisoft), sperimentale.** Per le scuole che usano Nuvola al posto di Argo. Nella configurazione dello studente scegli `registro: nuvola` e inserisci username e password di Nuvola (il codice scuola non serve; con più figli sullo stesso account usa `alunno` oppure `alunno_id`). Compiti, voti e medie, assenze, note, argomenti delle lezioni, promemoria e comunicazioni di classe arrivano nello stesso formato di Argo, quindi notifiche Telegram e pagina web funzionano allo stesso modo. Chi usa Argo non deve cambiare niente: `registro` vale `argo` se non lo scrivi.
+- Il collegamento a Nuvola è opera di @Gianlu1107; io non ho un account Nuvola per provarlo, quindi se qualcosa non torna aprite pure una segnalazione.
+- Dentro l'add-on c'è un piccolo client per le API di Nuvola (`compitapp/nuvola_api`), senza dipendenze aggiuntive.
+- Grazie a @Gianlu1107 per il connettore Nuvola e per il client.
+
 ## 2.1.3
 
 - **Corretto il login con utente e password, che da fine ottobre non funzionava più** (nel registro compariva `Errore sessione ...: 'location'` e non arrivava più nessun dato). Argo ha aggiunto, alla fine dell'accesso, una pagina intermedia «Accesso completato ... Continua» al posto del reindirizzamento diretto, e la libreria usata finora non la sa seguire. CompitAPP ora fa il login da solo e segue anche quella pagina.
