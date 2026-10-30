@@ -37,7 +37,7 @@ class TestSpidConnector(unittest.TestCase):
 
     def test_get_session_spid_usa_argospid(self):
         with patch.object(argo_mod, "ArgoSpid") as spid_cls, \
-                patch.object(argo_mod, "ArgoFamiglia") as pwd_cls, \
+                patch.object(argo_mod, "ArgoPassword") as pwd_cls, \
                 patch.object(argo_mod, "_scegli_profilo"):
             sess = ArgoConnector(STUDENTE_SPID).get_session()
         spid_cls.assert_called_once_with("SG1", "Figlio SPID")
@@ -46,7 +46,7 @@ class TestSpidConnector(unittest.TestCase):
 
     def test_get_session_password_resta_invariata(self):
         with patch.object(argo_mod, "ArgoSpid") as spid_cls, \
-                patch.object(argo_mod, "ArgoFamiglia") as pwd_cls, \
+                patch.object(argo_mod, "ArgoPassword") as pwd_cls, \
                 patch.object(argo_mod, "_scegli_profilo"):
             ArgoConnector(STUDENTE_PWD).get_session()
         pwd_cls.assert_called_once_with("SG1", "u", "p")
@@ -64,7 +64,7 @@ class TestSpidConnector(unittest.TestCase):
             self.assertEqual(spid_cls.call_count, 2)  # scaduta: ricreata
 
     def test_sessione_password_non_scade_per_eta(self):
-        with patch.object(argo_mod, "ArgoFamiglia") as pwd_cls, \
+        with patch.object(argo_mod, "ArgoPassword") as pwd_cls, \
                 patch.object(argo_mod, "_scegli_profilo"):
             conn = ArgoConnector(STUDENTE_PWD)
             conn.get_session()

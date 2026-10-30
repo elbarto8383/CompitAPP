@@ -41,6 +41,25 @@ def _reset_session(nome: str) -> None:
     _sessioni_creata.pop(nome, None)
 
 
+class ArgoPassword(ArgoFamiglia):
+    """Sessione Argo con utente e password. Usa argo_login al posto del login della libreria
+    argofamiglia, che non segue la pagina intermedia «Accesso completato ... Continua» di Argo."""
+
+    def connect(self):
+        import argo_login
+        school = self._ArgoFamiglia__school
+        token, tokens = argo_login.login(school, self._ArgoFamiglia__username, self._ArgoFamiglia__password)
+        self._ArgoFamiglia__token = token
+        self._ArgoFamiglia__login_data = tokens
+        self._ArgoFamiglia__headers = {
+            "Content-Type": "Application/json",
+            "Authorization": "Bearer " + tokens["access_token"],
+            "Accept": "Application/json",
+            "x-cod-min": school,
+            "x-auth-token": token}
+        return self
+
+
 class ArgoSpid(ArgoFamiglia):
     """Sessione Argo per chi accede con SPID/CIE: niente utente e password, il token di accesso
     si ottiene rinnovando quello salvato da spid_auth."""
@@ -225,7 +244,7 @@ class ArgoConnector(BaseConnector):
                     if spid:
                         _sessions[nome] = ArgoSpid(self.studente['codice_scuola'], nome)
                     else:
-                        _sessions[nome] = ArgoFamiglia(
+                        _sessions[nome] = ArgoPassword(
                             self.studente['codice_scuola'],
                             self.studente['username'],
                             self.studente['password']
