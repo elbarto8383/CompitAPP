@@ -343,6 +343,15 @@ def avvia_bot():
     if not TELEGRAM_TOKEN:
         print("[BOT] Token non configurato")
         return
+    mode = os.environ.get('TELEGRAM_RICEZIONE', 'polling')
+    if mode == 'home_assistant':
+        from ha_telegram_bridge import run_bridge
+        threading.Thread(target=run_bridge, args=(handle_update,), daemon=True).start()
+        print('[BOT] Ricezione tramite Home Assistant; polling Telegram disattivato', flush=True)
+        return
+    if mode != 'polling':
+        print('[BOT] Modalita ricezione non valida; polling non avviato', flush=True)
+        return
     set_comandi_bot()
     threading.Thread(target=polling_loop, daemon=True).start()
     print("[BOT] Thread avviato ✅")

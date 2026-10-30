@@ -19,6 +19,7 @@ if os.path.exists(config_path):
         old = str(cfg.get('telegram_chat_ids', '')).strip()
         if old: ids = [x.strip() for x in old.replace('\n',',').split(',') if x.strip()]
     os.environ['TELEGRAM_TOKEN']    = str(cfg.get('telegram_token', ''))
+    os.environ['TELEGRAM_RICEZIONE'] = str(cfg.get('telegram_ricezione', 'polling'))
     os.environ['TELEGRAM_CHAT_IDS'] = ','.join(ids)
     os.environ['STUDENTE_CHAT_ID']  = str(cfg.get('studente_chat_id', '')).strip()
     os.environ['GENITORE1_NOME']    = str(cfg.get('genitore1_nome', 'Genitore 1'))

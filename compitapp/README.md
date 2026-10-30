@@ -75,6 +75,25 @@ I comandi vengono registrati **automaticamente** all'avvio, senza passare da @Bo
 | `/voti` | Ultimi voti e media per materia |
 | `/help` | Elenco dei comandi |
 
+
+#### Condividere il bot con Home Assistant
+
+Se lo stesso bot è già usato dall’integrazione Telegram bot di Home Assistant in modalità Polling, due ricevitori `getUpdates` entrano in conflitto: nei log può comparire `Conflict: terminated by other getUpdates request` e i comandi possono smettere di rispondere.
+
+Nella configurazione di CompitAPP scegli:
+
+```yaml
+telegram_ricezione: home_assistant
+```
+
+Mantieni il token e le chat esistenti, configura le chat consentite anche nell’integrazione Telegram bot di HA e riavvia CompitAPP. Home Assistant deve emettere gli eventi `telegram_command`: il ponte ascolta questi eventi dal proxy Supervisor, senza aggiungere automazioni o endpoint HTTP propri. Non occorrono token HA personali o dipendenze nuove.
+
+In questa modalità CompitAPP gestisce `/voti`, `/resoconto` e `/orario` (anche `/orario lunedi`) dalle chat genitori configurate. Gli handler attuali includono dati di tutti gli studenti: il ponte non abilita questi comandi alle chat studenti. I comandi HA estranei vengono ignorati. Le notifiche automatiche continuano a usare lo stesso bot e la stessa chat. Il ponte non registra la lista dei comandi del bot, così non sovrascrive quella di HA; digita i comandi manualmente. `/start`, `/chatid` e `/help` restano gestiti dal bot diretto nella modalità polling.
+
+La connessione viene ristabilita dopo un’interruzione, senza ripiegare su `getUpdates`. I comandi inviati mentre il ponte non è connesso non vengono accodati: riprovali dopo la riconnessione. Il processo deve restare unico, come nell’avvio Docker incluso. La configurazione presuppone un solo bot Telegram gestito da HA: più bot con le stesse chat richiedono anche un filtro sulla configurazione sorgente dell’evento.
+
+Il valore predefinito resta `polling`, compreso quando l’opzione manca nelle configurazioni già salvate. Usalo con un bot dedicato a CompitAPP e un solo ricevitore attivo. `polling_intervallo_minuti` riguarda il registro scolastico e non modifica la ricezione Telegram.
+
 ### 🔔 Notifiche automatiche
 
 | Evento | Genitori | Studente |
@@ -220,6 +239,7 @@ Da **Impostazioni → Add-on → CompitAPP → Configurazione**:
 ```yaml
 # Token del bot Telegram (lo crei con @BotFather)
 telegram_token: "123456:ABC-DEF..."   # campo oscurato
+telegram_ricezione: "polling"        # polling | home_assistant (bot condiviso)
 
 # Genitore 1 (obbligatorio)
 genitore1_nome: "Mario"
@@ -376,6 +396,7 @@ CompitAPP cresce grazie a chi lo prova e segnala problemi:
 - [@CGCM2025](https://github.com/CGCM2025): ha individuato come Argo calcola le medie (esclusi i voti «non fa media») e ha scritto la correzione inclusa nella versione 2.0.3, così la media in CompitAPP coincide con quella di DiDUP.
 - [@JackMorens](https://github.com/JackMorens): ha segnalato le notifiche dei promemoria ripetute ogni 30 minuti e ha individuato nel codice la causa (testi lunghi confrontati e salvati con lunghezze diverse); la correzione è nella versione 2.1.2.
 - [@Gianlu1107](https://github.com/Gianlu1107): ha proposto e scritto la riorganizzazione a «connettori» (`BaseConnector` e `ArgoConnector`) inclusa nella versione 2.1.1, che prepara il supporto ad altri registri elettronici oltre ad Argo.
+- [@kevinilcondor](https://github.com/kevinilcondor): ha segnalato il conflitto tra CompitAPP e Home Assistant quando condividono lo stesso bot Telegram e ha scritto il «ponte» che risolve il problema (opzione `telegram_ricezione`), incluso nella versione 2.2.0.
 - Chi ha provato l'app con più figli e con account diversi, e ha condiviso i dettagli dei propri registri: senza di voi non avrei potuto sistemare questi casi.
 
 ---
