@@ -210,7 +210,9 @@ def configurazione():
         spid = spid_auth.stato(sel)
     cfg = {
         'spid': spid,
-        'connesso': len(studenti) > 0 and bool(cred.get('codice_scuola')) and (not spid or spid['stato'] == 'collegato'),
+        'connesso': len(studenti) > 0 and (
+            bool(cred.get('username')) if str(cred.get('registro', '')).lower() == 'nuvola'
+            else bool(cred.get('codice_scuola')) and (not spid or spid['stato'] == 'collegato')),
         'username': cred.get('username',''),
         'codice_scuola': cred.get('codice_scuola',''),
         'genitore1_nome': os.environ.get('GENITORE1_NOME', 'Genitore 1'),

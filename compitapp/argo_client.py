@@ -7,17 +7,22 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from connectors import ArgoConnector, BaseConnector, get_connector
+from connectors import ArgoConnector, BaseConnector, NuvolaConnector, get_connector
 from connectors.argo import _reset_session as _reset_connector_session
+
+
+def _valido(s: Dict[str, Any]) -> bool:
+    if str(s.get('registro') or 'argo').strip().lower() == 'nuvola':
+        return bool(s.get('username'))
+    return bool(s.get('codice_scuola') and (s.get('username') or s.get('accesso') == 'spid'))
 
 
 def get_studenti() -> List[Dict[str, Any]]:
     """Estrae l'elenco degli studenti configurati dalla variabile di ambiente STUDENTI.
-    Servono codice_scuola e, per l'accesso con password, username (con SPID non serve)."""
+    Argo: codice_scuola e, con password, username (con SPID non serve). Nuvola: username."""
     raw = os.environ.get('STUDENTI', '[]')
     try:
-        studenti = json.loads(raw)
-        return [s for s in studenti if s.get('codice_scuola') and (s.get('username') or s.get('accesso') == 'spid')]
+        return [s for s in json.loads(raw) if _valido(s)]
     except Exception as e:
         print(f"[ARGO] Errore parsing STUDENTI: {e}")
         return []
@@ -97,4 +102,5 @@ __all__ = [
     "fetch_medie",
     "BaseConnector",
     "ArgoConnector",
+    "NuvolaConnector",
 ]
