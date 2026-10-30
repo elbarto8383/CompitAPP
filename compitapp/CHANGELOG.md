@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.1
+
+- Riorganizzazione interna del codice: la parte che parla con Argo è ora un «connettore» separato, così in futuro si potranno aggiungere altri registri elettronici. Per te non cambia niente: accesso con password, accesso con SPID, più figli sullo stesso account, medie e pulizia dei dati funzionano come prima.
+- Grazie a @Gianlu1107 per la riorganizzazione.
+
 ## 2.1.0
 
 - **Accesso con SPID/CIE (sperimentale).** Per le scuole che hanno tolto l'accesso con utente e password. Nella configurazione dello studente scegli `accesso: spid` (username e password non servono), poi apri la pagina **Configurazione → Collega con SPID**: l'app genera un link, tu accedi con SPID da un computer, copi l'indirizzo finale e lo incolli. Da lì in poi l'app rinnova da sola l'accesso e salva ogni nuovo token di rinnovo subito, in uno spazio privato dell'add-on. Se Argo rifiuta il rinnovo, lo studente risulta «da ricollegare» e i genitori ricevono un solo avviso su Telegram. Non ancora provato a lungo su un account reale: per ora è sperimentale e non si sa quanto duri la catena di rinnovi oltre i 4 giorni circa verificati.
