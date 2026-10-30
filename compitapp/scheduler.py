@@ -39,9 +39,10 @@ def sync_compiti():
                 for materia, testo in zip(info.get('materie',[]), info.get('compiti',[])):
                     testo_clean = testo.strip()
                     tot_trovati += 1
-                    if not _esiste(conn, 'compiti', nome, data=data_str, materia=materia, testo=testo_clean[:500]):
+                    testo_db = testo_clean[:1000]   # lo stesso valore va confrontato e salvato, altrimenti i testi lunghi si duplicano
+                    if not _esiste(conn, 'compiti', nome, data=data_str, materia=materia, testo=testo_db):
                         conn.execute('INSERT INTO compiti (studente,data,materia,testo) VALUES (?,?,?,?)',
-                                     (nome, data_str, materia, testo_clean[:1000]))
+                                     (nome, data_str, materia, testo_db))
                         print(f"[SCHEDULER] 🆕 Nuovo compito {nome}: {materia} per {data_str}")
                         try:
                             if datetime.strptime(data_str, '%Y-%m-%d').date() >= date.today():
@@ -171,7 +172,7 @@ def sync_note():
                 testo = n.get('testo','')
                 docente = n.get('docente','')
                 if data_str and testo:
-                    if not _esiste(conn, 'note_disciplinari', nome, data=data_str, testo=testo[:200]):
+                    if not _esiste(conn, 'note_disciplinari', nome, data=data_str, testo=testo):
                         conn.execute('INSERT INTO note_disciplinari (studente,data,docente,testo,notificato) VALUES (?,?,?,?,?)',
                                      (nome, data_str, docente, testo, 1 if silenzioso else 0))
                         if not silenzioso:
@@ -208,7 +209,7 @@ def sync_bacheca():
                     if uid:
                         exists = conn.execute('SELECT id FROM bacheca WHERE uid=?', (uid,)).fetchone() is not None
                     else:
-                        exists = _esiste(conn, 'bacheca', nome, titolo=titolo[:200], data=data_str)
+                        exists = _esiste(conn, 'bacheca', nome, titolo=titolo[:500], data=data_str)
                     if not exists:
                         conn.execute('INSERT INTO bacheca (studente,data,titolo,testo,mittente,uid,notificato) VALUES (?,?,?,?,?,?,?)',
                                      (nome, data_str, titolo[:500], testo[:2000], mittente, uid, 1 if silenzioso else 0))
@@ -238,9 +239,10 @@ def sync_argomenti():
                 argomento = a.get('argomento','')
                 attivita = a.get('attivita','')
                 if data_str and (argomento or attivita):
-                    if not _esiste(conn, 'argomenti', nome, data=data_str, materia=materia, argomento=argomento[:200]):
+                    argomento_db = argomento[:500]
+                    if not _esiste(conn, 'argomenti', nome, data=data_str, materia=materia, argomento=argomento_db):
                         conn.execute('INSERT INTO argomenti (studente,data,materia,argomento,attivita) VALUES (?,?,?,?,?)',
-                                     (nome, data_str, materia, argomento[:500], attivita[:500]))
+                                     (nome, data_str, materia, argomento_db, attivita[:500]))
             if silenzioso:
                 _storico_fatto(conn, 'argomenti', nome)
             conn.commit()
@@ -262,9 +264,10 @@ def sync_promemoria():
                 testo = p.get('testo','')
                 docente = p.get('docente','')
                 if data_str and testo:
-                    if not _esiste(conn, 'promemoria', nome, data=data_str, testo=testo[:200]):
+                    testo_db = testo[:500]
+                    if not _esiste(conn, 'promemoria', nome, data=data_str, testo=testo_db):
                         conn.execute('INSERT INTO promemoria (studente,data,testo,docente,notificato) VALUES (?,?,?,?,?)',
-                                     (nome, data_str, testo[:500], docente, 1 if silenzioso else 0))
+                                     (nome, data_str, testo_db, docente, 1 if silenzioso else 0))
                         if not silenzioso:
                             notifica_promemoria(nome, data_str, docente, testo)
             if silenzioso:

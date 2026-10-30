@@ -90,9 +90,36 @@ def init_db():
         PRIMARY KEY (studente, giorno, ora)
     )''')
 
+    _rimuovi_duplicati_una_tantum(conn)
     conn.commit()
     conn.close()
     print("[DB] Inizializzato correttamente")
+
+
+# Colonne che identificano una voce: righe uguali su queste colonne sono la stessa voce.
+_CHIAVI_DUPLICATI = {
+    'compiti': 'studente, data, materia, testo',
+    'note_disciplinari': 'studente, data, testo',
+    'argomenti': 'studente, data, materia, argomento',
+    'promemoria': 'studente, data, testo',
+}
+
+
+def _rimuovi_duplicati_una_tantum(conn):
+    """Fino alla 2.1.1 un testo piu' lungo del limite di confronto (200 caratteri per promemoria, note e
+    argomenti) non veniva riconosciuto come gia' salvato: a ogni sincronizzazione ne nasceva una copia
+    (e una nuova notifica). Una sola volta, si tiene la riga piu' vecchia e si cancellano le copie."""
+    chiave = "pulizia_duplicati:2.1.2"
+    if conn.execute('SELECT 1 FROM meta WHERE chiave=?', (chiave,)).fetchone():
+        return
+    rimosse = 0
+    for tabella, colonne in _CHIAVI_DUPLICATI.items():
+        cur = conn.execute(
+            f'DELETE FROM {tabella} WHERE id NOT IN (SELECT MIN(id) FROM {tabella} GROUP BY {colonne})')
+        rimosse += cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+    conn.execute("INSERT OR REPLACE INTO meta (chiave, valore) VALUES (?, '1')", (chiave,))
+    if rimosse:
+        print(f"[DB] Rimosse {rimosse} voci duplicate (testi lunghi salvati piu' volte)")
 
 
 def _num(v):
